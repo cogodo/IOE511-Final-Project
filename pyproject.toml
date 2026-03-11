@@ -1,0 +1,7 @@
+[project]
+name = "ioe511-final"
+version = "0.1.0"
+description = "Final project for IOE 511"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["numpy", ]
