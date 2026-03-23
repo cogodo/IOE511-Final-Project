@@ -24,6 +24,9 @@ def gradient_descent(x: Array, f: float, g: Array, objective: SolverObjective, a
             while objective.value(x + alpha*d) > f + algorithm.line_search.c1*alpha*g.transpose() @ d:
                 alpha = alpha*algorithm.line_search.tau
 
+        case 'Wolfe':
+            pass
+
     x_new = x + alpha*d
     f_new = objective.value(x_new)
     g_new = objective.grad(x_new)
@@ -31,8 +34,29 @@ def gradient_descent(x: Array, f: float, g: Array, objective: SolverObjective, a
     return (x_new, f_new, g_new, d, alpha)
 
 
-def newton(objective: SolverObjective, x: Array, options: SolverOptions):
-    pass
+def newton(x: Array, f: float, g: Array, H: Array, objective: SolverObjective, algorithm: SolverAlgorithm, options: SolverOptions):
+
+    # search direction is -inv(H) * g
+    d = -np.linalg.inv(H) @ g
+    
+    # determine the step size
+    alpha = 0
+    match algorithm.line_search.method:
+        case 'Backtracking':
+            alpha = algorithm.line_search.alpha0
+
+            # perform backtracking line search
+            while objective.value(x + alpha*d) > f + algorithm.line_search.c1*alpha*g.transpose() @ d:
+                alpha = alpha*algorithm.line_search.tau
+        case 'Wolfe':
+            pass
+
+    x_new = x + alpha*d
+    f_new = objective.value(x_new)
+    g_new = objective.grad(x_new)
+    H_new = objective.hess(x_new)
+
+    return (x_new, f_new, g_new, H_new, d, alpha)
 
 def trsr1cg(objective: SolverObjective, x: Array, options: SolverOptions):
     pass

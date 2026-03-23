@@ -13,9 +13,9 @@ Array = npt.NDArray[np.float64]
 class SolverObjective:
     name: str
     x0: Array
-    A: Array
-    b: Array
-    c: Array
+    A: Array = None
+    b: Array = None
+    c: Array = None
     value: Callable[[Array], float] = None
     grad: Callable[[Array], Array] = None
     hess: Callable[[Array], Array] = None

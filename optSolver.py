@@ -1,5 +1,5 @@
 import numpy as np
-from algorithms.algorithms import gradient_descent
+from algorithms.algorithms import gradient_descent, newton
 from algorithms.base import SolverAlgorithm
 from algorithms.utils import SolverOptions
 from objectives.base import SolverObjective
@@ -62,7 +62,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
                 x_new, f_new, g_new, d, alpha = gradient_descent(x=x, f=f, g=g, objective=problem, algorithm=method, options=options)
 
             case 'Newton':
-                pass
+                x_new, f_new, g_new, H_new, d, alpha = newton(x=x, f=f, g=g, H=H, objective=problem, algorithm=method, options=options)
 
             case _:
                 raise ValueError("Method not found!")
