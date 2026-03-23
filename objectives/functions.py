@@ -1,5 +1,8 @@
 # All problems + associated gradients and Hessians
 import numpy as np
+import numpy.typing as npt
+
+Array = npt.NDArray[np.float64]
 
 def rosen_func(x):
     """ Compute function value for Rosenbrock problem"""
@@ -30,4 +33,23 @@ def rosen_Hess(x):
         ],
         dtype=float,
     )
+
+def quadratic_func(A: Array, b: Array, c: Array, x: Array):
+
+    """ Compute function value for quadratic problems"""
+
+    return 0.5*(x.transpose() @ A @ x) + b.transpose() @ x + c
+
+def quadratic_grad(A: Array, b: Array, x: Array):
+
+    """ Compute gradient for quadratic problems"""
+    
+    return A @ x + b
+
+def quadratic_Hess(A: Array):
+
+    """ Compute Hessian for quadratic problems"""
+
+    return A
+    
 

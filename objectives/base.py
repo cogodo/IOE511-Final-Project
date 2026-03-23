@@ -8,10 +8,14 @@ import numpy.typing as npt
 
 Array = npt.NDArray[np.float64]
 
-@dataclass(frozen=True, slots=True)
-class Objective:
+# NOTE: needed to set frozen to False here for program to run without error
+@dataclass(frozen=False, slots=True)
+class SolverObjective:
     name: str
     x0: Array
-    value: Callable[[Array], float]
-    grad: Callable[[Array], Array]
-    hess: Callable[[Array], Array]
+    A: Array
+    b: Array
+    c: Array
+    value: Callable[[Array], float] = None
+    grad: Callable[[Array], Array] = None
+    hess: Callable[[Array], Array] = None
