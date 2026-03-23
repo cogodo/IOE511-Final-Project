@@ -25,11 +25,12 @@ def setProblem(problem: SolverObjective):
         
 def setMethod(method: SolverAlgorithm):
     
+    # set the step for every iteratiokn
     match method.name:
         case 'GradientDescent':
             method.step = lambda x, f, g, H, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
         case 'Newton':
-            method.step = lambda x, f, g, H, objective, options: newton(x=x, f=f, g=g, H=H, objective=objective, options=options)
+            method.step = newton
     return method
 
 def setOptions(options: SolverOptions):
@@ -50,12 +51,6 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     H = problem.hess(x)
     norm_g = np.linalg.norm(g, ord=np.inf)
     norm_g_x0 = norm_g
-
-    # initialize new variables
-    x_new = x
-    f_new = f
-    g_new = g
-    H_new = H
 
     # set initial iteration counter
     k = 0
