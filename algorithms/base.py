@@ -1,18 +1,18 @@
 # Class to make the algorithm-level abstraction clear
 
 from dataclasses import dataclass
+from typing import Callable
+
 import numpy as np
 import numpy.typing as npt
 
-from algorithms.utils import LineSearchOptions, TrustRegionOptions, CGOptions
-
 Array = npt.NDArray[np.float64]
 
-@dataclass(frozen=True, slots=True)
+from algorithms.utils import StepResults
+
+# NOTE: needed to set frozen to false here to run without error
+@dataclass(frozen=False, slots=True)
 class SolverAlgorithm:
     name: str
-    line_search: LineSearchOptions | None = None
-    trust_region: TrustRegionOptions | None = None
-    cg: CGOptions | None = None
-
+    step: Callable[..., StepResults] = None
 

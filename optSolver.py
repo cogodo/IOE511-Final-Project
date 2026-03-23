@@ -1,8 +1,8 @@
 import numpy as np
 from algorithms.algorithms import gradient_descent, newton
 from algorithms.base import SolverAlgorithm
-from algorithms.utils import SolverOptions
 from objectives.base import SolverObjective
+from options.base import SolverOptions
 from objectives.functions import rosen_func, rosen_grad, rosen_Hess, quadratic_func, quadratic_grad, quadratic_Hess
 
 def setProblem(problem: SolverObjective):
@@ -14,9 +14,9 @@ def setProblem(problem: SolverObjective):
             problem.hess = rosen_Hess
 
         case 'Quadratic':
-            problem.value = lambda x: quadratic_func(problem.A, problem.b, problem.c, x)
-            problem.grad = lambda x: quadratic_grad(problem.A, problem.b, x)
-            problem.hess = lambda x: quadratic_Hess(problem.A)
+            problem.value = lambda x: quadratic_func(A=problem.A, b=problem.b, c=problem.c, x=x)
+            problem.grad = lambda x: quadratic_grad(A=problem.A, b=problem.b, x=x)
+            problem.hess = lambda x: quadratic_Hess(A=problem.A)
 
         case _:
             raise ValueError("Problem name does not exist!")
@@ -24,7 +24,12 @@ def setProblem(problem: SolverObjective):
     return problem
         
 def setMethod(method: SolverAlgorithm):
-    pass
+    
+    match method.name:
+        case 'GradientDescent':
+            method.step = lambda x, f, g, H, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
+        case 'Newton':
+            method.step = lambda x, f, g, H, objective, options: newton(x=x, f=f, g=g, H=H, objective=objective, options=options)
     return method
 
 def setOptions(options: SolverOptions):
@@ -57,22 +62,16 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
 
     # 2 types of termination conditions: checking that gradient is small enough and bounding the max number of iterations k
     while not (norm_g <= options.term_tol*max(norm_g_x0, 1) or k >= options.max_iterations):
-        match method.name:
-            case 'GradientDescent':
-                x_new, f_new, g_new, d, alpha = gradient_descent(x=x, f=f, g=g, objective=problem, algorithm=method, options=options)
 
-            case 'Newton':
-                x_new, f_new, g_new, H_new, d, alpha = newton(x=x, f=f, g=g, H=H, objective=problem, algorithm=method, options=options)
-
-            case _:
-                raise ValueError("Method not found!")
+        # take a step in the method
+        results = method.step(x, f, g, H, problem, options)
             
         # update function values
-        x = x_new
-        f = f_new
-        g = g_new
+        x = results.x_new
+        f = results.f_new
+        g = results.g_new
         norm_g = np.linalg.norm(g, ord=np.inf)
-        H = H_new
+        H = results.H_new
 
         # increment iteration count
         k = k + 1
