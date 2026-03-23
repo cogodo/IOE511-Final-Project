@@ -21,7 +21,7 @@ def gradient_descent(x: Array, f: float, g: Array, objective: SolverObjective, a
             alpha = algorithm.line_search.alpha0
 
             # perform backtracking line search
-            while objective.value(x + alpha*d) > f + algorithm.line_search.c1*alpha*g.transpose()*d:
+            while objective.value(x + alpha*d) > f + algorithm.line_search.c1*alpha*g.transpose() @ d:
                 alpha = alpha*algorithm.line_search.tau
 
     x_new = x + alpha*d

@@ -27,5 +27,7 @@ GD_backtracking_method = SolverAlgorithm(name='GradientDescent', line_search=Lin
 options = SolverOptions(term_tol=epsilon, max_iterations=max_iters)
 
 # run quad2 problem with GD
-x, f = optSolver(problem=quad2_problem, method=GD_const_method, options=options)
+# x, f = optSolver(problem=quad2_problem, method=GD_const_method, options=options)
+# print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=quad2_problem, method=GD_backtracking_method, options=options)
 print(f'x: {x}, f: {f}')
