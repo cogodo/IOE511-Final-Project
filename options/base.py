@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-# NOTE: what is rho used for?
 # alpha_bar: constant step size
 @dataclass(frozen=True, slots=True)
 class LineSearchOptions:
@@ -8,9 +7,8 @@ class LineSearchOptions:
     c1: float = 1e-4
     c2: float = 0.9
     alpha0: float = 1.0
-    rho: float = 0.5
     const_alpha: float = 1e-3
-    tau: float = 1.0
+    tau: float = 0.5
     
 @dataclass(frozen=True, slots=True)
 class TrustRegionOptions:
