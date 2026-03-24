@@ -51,3 +51,9 @@ print(f'x: {x}, f: {f}')
 # run rosenbrock with Newton
 x, f = optSolver(problem=rosen_problem, method=newton_backtracking_method, options=newton_backtracking_options)
 print(f'x: {x}, f: {f}')
+
+
+# TODO: more things to track (with plots hopefully) - num iterations to converge, time to converge, total memory(?)
+# put multiple algos on the same plot when it makes sense to compare for the paper / poster
+# for individual runs, we probably want 2 loss plots (I think): One in terms of iterations, and one in terms of time
+# or if the time one doesnt turn out we could just output the total time taken at the end too.
