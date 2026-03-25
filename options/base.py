@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-# alpha_bar: constant step size
+# NOTE: what is rho used for?
 @dataclass(frozen=True, slots=True)
 class LineSearchOptions:
     method: str = "Backtracking"
@@ -8,7 +8,11 @@ class LineSearchOptions:
     c2: float = 0.9
     alpha0: float = 1.0
     const_alpha: float = 1e-3
-    tau: float = 0.5
+    alpha_low0: float = 0.0
+    alpha_high0: float = 1000.0
+    rho: float = 0.5
+    tau: float = 1.0
+    c: float = 0.5
     
 @dataclass(frozen=True, slots=True)
 class TrustRegionOptions:

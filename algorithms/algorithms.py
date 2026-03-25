@@ -25,7 +25,23 @@ def gradient_descent(x: Array, f: float, g: Array, objective: SolverObjective, o
                 alpha = alpha*options.line_search.tau
 
         case 'Wolfe':
-            pass
+            alpha = options.line_search.alpha0
+            alpha_low = options.line_search.alpha_low0
+            alpha_high = options.line_search.alpha_high0
+
+            # perform weak Wolfe line search
+            while True:
+                if (objective.value(x + alpha*d) <= f + options.line_search.c1*alpha*g.transpose() @ d):
+                    if (objective.grad(x + alpha*d).transpose() @ d >= options.line_search.c2*g.transpose() @ d):
+                        break
+                    alpha_low = alpha
+                else:
+                    alpha_high = alpha
+                
+                alpha = options.line_search.c*alpha_low + (1 - options.line_search.c)*alpha_high
+
+        case _:
+            raise ValueError("Line search method does not exist!")
 
     x_new = x + alpha*d
 
@@ -52,8 +68,25 @@ def newton(x: Array, f: float, g: Array, H: Array, objective: SolverObjective, o
             # perform backtracking line search
             while objective.value(x + alpha*d) > f + options.line_search.c1*alpha*g.transpose() @ d:
                 alpha = alpha*options.line_search.tau
+
         case 'Wolfe':
-            pass
+            alpha = options.line_search.alpha0
+            alpha_low = options.line_search.alpha_low0
+            alpha_high = options.line_search.alpha_high0
+
+            # perform weak Wolfe line search
+            while True:
+                if (objective.value(x + alpha*d) <= f + options.line_search.c1*alpha*g.transpose() @ d):
+                    if (objective.grad(x + alpha*d).transpose() @ d >= options.line_search.c2*g.transpose() @ d):
+                        break
+                    alpha_low = alpha
+                else:
+                    alpha_high = alpha
+                
+                alpha = options.line_search.c*alpha_low + (1 - options.line_search.c)*alpha_high
+                
+        case _:
+            raise ValueError("Line search method does not exist!")
 
     x_new = x + alpha*d
 

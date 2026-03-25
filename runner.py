@@ -29,29 +29,42 @@ GD_const_options = SolverOptions(line_search=LineSearchOptions(method='Constant'
 GD_backtracking_method = SolverAlgorithm(name='GradientDescent')
 GD_backtracking_options = SolverOptions(line_search=LineSearchOptions(method='Backtracking', alpha0=alpha_bar, c1=c1, tau=tau), max_iterations=max_iters, term_tol=epsilon)
 
+# set up Wolfe gradient descent method and options
+GD_wolfe_method = SolverAlgorithm(name='GradientDescent')
+GD_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe'), max_iterations=max_iters, term_tol=epsilon)
+
 # set up the backtracking newton method and options
 newton_backtracking_method = SolverAlgorithm(name='Newton')
 newton_backtracking_options = SolverOptions(line_search=LineSearchOptions(method='Backtracking', alpha0=alpha_bar, c1=c1, tau=tau), max_iterations=max_iters, term_tol=epsilon)
 
+# set up Wolfe newton method and options
+newton_wolfe_method = SolverAlgorithm(name='Newton')
+newton_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe'), max_iterations=max_iters, term_tol=epsilon)
+
 
 # run quad2 problem with GD
-# x, f = optSolver(problem=quad2_problem, method=GD_const_method, options=GD_const_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=quad2_problem, method=GD_backtracking_method, options=GD_backtracking_options)
-# print(f'x: {x}, f: {f}')
-
-# run rosenbrock with GD
-x, f = optSolver(problem=rosen_problem, method=GD_backtracking_method, options=GD_backtracking_options)
+x, f = optSolver(problem=quad2_problem, method=GD_const_method, options=GD_const_options)
 print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=quad2_problem, method=GD_backtracking_method, options=GD_backtracking_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=quad2_problem, method=GD_wolfe_method, options=GD_wolfe_options)
+print(f'x: {x}, f: {f}')
+# # run rosenbrock with GD
+# x, f = optSolver(problem=rosen_problem, method=GD_backtracking_method, options=GD_backtracking_options)
+# print(f'x: {x}, f: {f}')
 
 # run quad2 problem with Newton
-x, f = optSolver(problem=quad2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
-print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=quad2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
+# print(f'x: {x}, f: {f}')
 
-# run rosenbrock with Newton
-x, f = optSolver(problem=rosen_problem, method=newton_backtracking_method, options=newton_backtracking_options)
-print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=quad2_problem, method=newton_wolfe_method, options=newton_wolfe_options)
+# print(f'x: {x}, f: {f}')
 
+# # run rosenbrock with Newton
+# x, f = optSolver(problem=rosen_problem, method=newton_backtracking_method, options=newton_backtracking_options)
+# print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=rosen_problem, method=newton_wolfe_method, options=newton_wolfe_options)
+# print(f'x: {x}, f: {f}')
 
 # TODO: more things to track (with plots hopefully) - num iterations to converge, time to converge, total memory(?)
 # put multiple algos on the same plot when it makes sense to compare for the paper / poster
