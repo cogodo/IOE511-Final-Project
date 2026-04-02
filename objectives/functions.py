@@ -38,10 +38,9 @@ def rosen_Hess(x: Array):
 
 
 def quadratic_func(A: Array, b: Array, c: Array, x: Array):
-
     """ Compute function value for quadratic problems"""
-
-    return 0.5*(x.transpose() @ A @ x) + b.transpose() @ x + c
+    Ax = A @ x
+    return 0.5 * (x.transpose() @ Ax) + b.transpose() @ x + c
 
 def quadratic_grad(A: Array, b: Array, x: Array):
 
@@ -55,4 +54,3 @@ def quadratic_Hess(A: Array):
 
     return A
     
-
