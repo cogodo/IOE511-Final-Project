@@ -6,7 +6,7 @@ from options.base import SolverOptions
 from objectives.functions import rosen_func, rosen_grad, rosen_Hess, quadratic_func, quadratic_grad, quadratic_Hess
 
 def setProblem(problem: SolverObjective):
-    
+
     match problem.name:
         case 'Rosenbrock':
             problem.value = rosen_func
@@ -20,11 +20,18 @@ def setProblem(problem: SolverObjective):
 
         case _:
             raise ValueError("Problem name does not exist!")
-        
+
     return problem
         
+from functools import partial
+
+
+def gradient_descent_wrapper(x, f, g, H, objective, options):
+    return gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
+
+
 def setMethod(method: SolverAlgorithm):
-    
+
     # set the step for every iteratiokn
     match method.name:
         case 'GradientDescent':
@@ -46,30 +53,43 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
 
     # compute initial function/gradient/Hessian
     x = problem.x0
-    f = problem.value(x)
-    g = problem.grad(x)
-    H = problem.hess(x)
-    norm_g = np.linalg.norm(g, ord=np.inf)
+    p_value = problem.value
+    p_grad = problem.grad
+    p_hess = problem.hess
+    m_step = method.step
+
+    f = p_value(x)
+    g = p_grad(x)
+    H = p_hess(x)
+
+    _abs = np.abs
+    _max = np.max
+
+    norm_g = _max(_abs(g))
     norm_g_x0 = norm_g
+
+    # precompute termination threshold
+    term_threshold = options.term_tol * max(norm_g_x0, 1)
+    max_iterations = options.max_iterations
 
     # set initial iteration counter
     k = 0
 
-    # 2 types of termination conditions: checking that gradient is small enough and bounding the max number of iterations k
-    while not (norm_g <= options.term_tol*max(norm_g_x0, 1) or k >= options.max_iterations):
+    # 2 types of termination conditions
+    while norm_g > term_threshold and k < max_iterations:
 
         # take a step in the method
-        results = method.step(x, f, g, H, problem, options)
-            
+        results = m_step(x, f, g, H, problem, options)
+
         # update function values
         x = results.x_new
         f = results.f_new
         g = results.g_new
-        norm_g = np.linalg.norm(g, ord=np.inf)
+        norm_g = _max(_abs(g))
         H = results.H_new
 
         # increment iteration count
-        k = k + 1
+        k += 1
 
     return x, f
 
