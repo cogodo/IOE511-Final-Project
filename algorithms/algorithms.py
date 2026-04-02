@@ -8,49 +8,79 @@ from objectives.base import SolverObjective
 from options.base import SolverOptions
 
 def gradient_descent(x: Array, f: float, g: Array, objective: SolverObjective, options: SolverOptions):
-    
+
     # search direction is -g
     d = -g
 
+    # Pre-compute g.transpose() @ d once (since d = -g, this is -||g||^2)
+    g_transpose_d = g.transpose() @ d
+
     # determine the step size
     alpha = 0
-    match options.line_search.method:
+    f_new_cached = None
+    g_new_cached = None
+
+    ls = options.line_search
+
+    match ls.method:
         case 'Constant':
-            alpha = options.line_search.const_alpha
+            alpha = ls.const_alpha
         case 'Backtracking':
-            alpha = options.line_search.alpha0
+            alpha = ls.alpha0
+            c1 = ls.c1
+            tau = ls.tau
 
             # perform backtracking line search
-            while objective.value(x + alpha*d) > f + options.line_search.c1*alpha*g.transpose() @ d:
-                alpha = alpha*options.line_search.tau
+            x_trial = x + alpha * d
+            f_trial = objective.value(x_trial)
+            while f_trial > f + c1 * alpha * g_transpose_d:
+                alpha = alpha * tau
+                x_trial = x + alpha * d
+                f_trial = objective.value(x_trial)
+
+            f_new_cached = f_trial
 
         case 'Wolfe':
-            alpha = options.line_search.alpha0
-            alpha_low = options.line_search.alpha_low0
-            alpha_high = options.line_search.alpha_high0
+            alpha = ls.alpha0
+            alpha_low = ls.alpha_low0
+            alpha_high = ls.alpha_high0
+            c1 = ls.c1
+            c2 = ls.c2
+            c_coeff = ls.c
+            c2_gtd = c2 * g_transpose_d
 
             # perform weak Wolfe line search
             while True:
-                if (objective.value(x + alpha*d) <= f + options.line_search.c1*alpha*g.transpose() @ d):
-                    if (objective.grad(x + alpha*d).transpose() @ d >= options.line_search.c2*g.transpose() @ d):
+                x_trial = x + alpha * d
+                f_trial = objective.value(x_trial)
+                if f_trial <= f + c1 * alpha * g_transpose_d:
+                    g_trial = objective.grad(x_trial)
+                    if g_trial.transpose() @ d >= c2_gtd:
+                        f_new_cached = f_trial
+                        g_new_cached = g_trial
                         break
                     alpha_low = alpha
                 else:
                     alpha_high = alpha
-                
-                alpha = options.line_search.c*alpha_low + (1 - options.line_search.c)*alpha_high
+
+                alpha = c_coeff * alpha_low + (1 - c_coeff) * alpha_high
 
         case _:
             raise ValueError("Line search method does not exist!")
 
-    x_new = x + alpha*d
+    x_new = x + alpha * d
+
+    if f_new_cached is None:
+        f_new_cached = objective.value(x_new)
+    if g_new_cached is None:
+        g_new_cached = objective.grad(x_new)
 
     results = StepResults(x_new=x_new,
-                          f_new=objective.value(x_new),
-                          g_new=objective.grad(x_new),
+                          f_new=f_new_cached,
+                          g_new=g_new_cached,
                           d=d,
                           alpha=alpha)
-    
+
     return results
 
 

@@ -6,35 +6,38 @@ from options.base import SolverOptions
 from objectives.functions import rosen_func, rosen_grad, rosen_Hess, quadratic_func, quadratic_grad, quadratic_Hess
 
 def setProblem(problem: SolverObjective):
-    
-    match problem.name:
-        case 'Rosenbrock':
-            problem.value = rosen_func
-            problem.grad = rosen_grad
-            problem.hess = rosen_Hess
 
-        case 'Quadratic':
-            problem.value = lambda x: quadratic_func(A=problem.A, b=problem.b, c=problem.c, x=x)
-            problem.grad = lambda x: quadratic_grad(A=problem.A, b=problem.b, x=x)
-            problem.hess = lambda x: quadratic_Hess(A=problem.A)
+    name = problem.name
 
-        case _:
-            raise ValueError("Problem name does not exist!")
-        
+    if name == 'Rosenbrock':
+        problem.value = rosen_func
+        problem.grad = rosen_grad
+        problem.hess = rosen_Hess
+
+    elif name == 'Quadratic':
+        A = problem.A
+        b = problem.b
+        c = problem.c
+        problem.value = lambda x, _A=A, _b=b, _c=c: quadratic_func(A=_A, b=_b, c=_c, x=x)
+        problem.grad = lambda x, _A=A, _b=b: quadratic_grad(A=_A, b=_b, x=x)
+        problem.hess = lambda x, _A=A: quadratic_Hess(A=_A)
+
+    else:
+        raise ValueError("Problem name does not exist!")
+
     return problem
         
 def setMethod(method: SolverAlgorithm):
-    
+
     # set the step for every iteratiokn
     match method.name:
         case 'GradientDescent':
-            method.step = lambda x, f, g, H, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
+            method.step = gradient_descent
         case 'Newton':
             method.step = newton
     return method
 
 def setOptions(options: SolverOptions):
-    pass
     return options
 
 def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: SolverOptions):
@@ -49,27 +52,34 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     f = problem.value(x)
     g = problem.grad(x)
     H = problem.hess(x)
-    norm_g = np.linalg.norm(g, ord=np.inf)
+    norm_g = np.max(np.abs(g))
     norm_g_x0 = norm_g
 
     # set initial iteration counter
     k = 0
 
+    # precompute termination threshold
+    term_threshold = options.term_tol * max(norm_g_x0, 1)
+    max_iterations = options.max_iterations
+
+    # local references for faster access
+    method_step = method.step
+
     # 2 types of termination conditions: checking that gradient is small enough and bounding the max number of iterations k
-    while not (norm_g <= options.term_tol*max(norm_g_x0, 1) or k >= options.max_iterations):
+    while norm_g > term_threshold and k < max_iterations:
 
         # take a step in the method
-        results = method.step(x, f, g, H, problem, options)
-            
+        results = method_step(x, f, g, H, problem, options)
+
         # update function values
         x = results.x_new
         f = results.f_new
         g = results.g_new
-        norm_g = np.linalg.norm(g, ord=np.inf)
+        norm_g = np.max(np.abs(g))
         H = results.H_new
 
         # increment iteration count
-        k = k + 1
+        k += 1
 
     return x, f
 
