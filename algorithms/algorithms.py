@@ -3,7 +3,7 @@ import numpy.typing as npt
 
 Array = npt.NDArray[np.float64]
 
-from algorithms.utils import StepResults
+from algorithms.utils import StepResults, backtracking_line_search, weak_wolfe_line_search
 from objectives.base import SolverObjective
 from options.base import SolverOptions
 
@@ -18,27 +18,10 @@ def gradient_descent(x: Array, f: float, g: Array, objective: SolverObjective, o
         case 'Constant':
             alpha = options.line_search.const_alpha
         case 'Backtracking':
-            alpha = options.line_search.alpha0
-
-            # perform backtracking line search
-            while objective.value(x + alpha*d) > f + options.line_search.c1*alpha*g.transpose() @ d:
-                alpha = alpha*options.line_search.tau
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
 
         case 'Wolfe':
-            alpha = options.line_search.alpha0
-            alpha_low = options.line_search.alpha_low0
-            alpha_high = options.line_search.alpha_high0
-
-            # perform weak Wolfe line search
-            while True:
-                if (objective.value(x + alpha*d) <= f + options.line_search.c1*alpha*g.transpose() @ d):
-                    if (objective.grad(x + alpha*d).transpose() @ d >= options.line_search.c2*g.transpose() @ d):
-                        break
-                    alpha_low = alpha
-                else:
-                    alpha_high = alpha
-                
-                alpha = options.line_search.c*alpha_low + (1 - options.line_search.c)*alpha_high
+            alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
 
         case _:
             raise ValueError("Line search method does not exist!")
@@ -80,27 +63,10 @@ def newton(x: Array, f: float, g: Array, H: Array, objective: SolverObjective, o
     alpha = 0
     match options.line_search.method:
         case 'Backtracking':
-            alpha = options.line_search.alpha0
-
-            # perform backtracking line search
-            while objective.value(x + alpha*d) > f + options.line_search.c1*alpha*g.transpose() @ d:
-                alpha = alpha*options.line_search.tau
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
 
         case 'Wolfe':
-            alpha = options.line_search.alpha0
-            alpha_low = options.line_search.alpha_low0
-            alpha_high = options.line_search.alpha_high0
-
-            # perform weak Wolfe line search
-            while True:
-                if (objective.value(x + alpha*d) <= f + options.line_search.c1*alpha*g.transpose() @ d):
-                    if (objective.grad(x + alpha*d).transpose() @ d >= options.line_search.c2*g.transpose() @ d):
-                        break
-                    alpha_low = alpha
-                else:
-                    alpha_high = alpha
-                
-                alpha = options.line_search.c*alpha_low + (1 - options.line_search.c)*alpha_high
+            alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
                 
         case _:
             raise ValueError("Line search method does not exist!")
@@ -122,8 +88,13 @@ def trsr1cg(objective: SolverObjective, x: Array, options: SolverOptions):
 def sr1(objective: SolverObjective, x: Array, options: SolverOptions):
     pass
 
-def bfgs(objective: SolverObjective, x: Array, options: SolverOptions):
-    pass
+def bfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjective, options: SolverOptions):
+    
+    # search direction is the Newton direction, but with the inverse Hessian approximation
+    d = -Hinv_approx @ g
+
+
+
 
 def dfp(objective: SolverObjective, x: Array, options: SolverOptions):
     pass

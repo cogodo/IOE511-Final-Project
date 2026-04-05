@@ -12,7 +12,7 @@ quad10_data = sio.loadmat('objectives/data/quadratic10.mat')
 alpha_bar = 1.0
 c1 = 1e-3
 tau = 0.5
-max_iters = 100
+max_iters = 1000
 epsilon = 1e-5
 
 # set up the quad2 problem
@@ -45,13 +45,13 @@ newton_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe
 # run quad2 problem with GD
 # x, f = optSolver(problem=quad2_problem, method=GD_const_method, options=GD_const_options)
 # print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=quad2_problem, method=GD_backtracking_method, options=GD_backtracking_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=quad2_problem, method=GD_wolfe_method, options=GD_wolfe_options)
-# print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=quad2_problem, method=GD_backtracking_method, options=GD_backtracking_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=quad2_problem, method=GD_wolfe_method, options=GD_wolfe_options)
+print(f'x: {x}, f: {f}')
 # # run rosenbrock with GD
-# x, f = optSolver(problem=rosen_problem, method=GD_backtracking_method, options=GD_backtracking_options)
-# print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_problem, method=GD_backtracking_method, options=GD_backtracking_options)
+print(f'x: {x}, f: {f}')
 
 # run quad2 problem with Newton
 x, f = optSolver(problem=quad2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
