@@ -125,9 +125,36 @@ class VectorCircularBuffer:
 
 
 @dataclass(frozen=True, slots=True)
-class BFGSState(InternalAlgorithmState):
+class LBFGSState(InternalAlgorithmState):
     s_buffer: VectorCircularBuffer
     y_buffer: VectorCircularBuffer
 
 def two_loop_recursion(g: Array, Hinv_approx: Array, s_buffer: VectorCircularBuffer, y_buffer: VectorCircularBuffer):
-    return None
+    q = np.squeeze(np.copy(g))
+
+    s_array = s_buffer.get_ordered()
+    y_array = y_buffer.get_ordered()
+
+    inner_products = np.einsum('ij,ij->i', s_array, y_array)
+    rho = 1 / inner_products
+    alphas = np.zeros_like(inner_products)
+    betas = np.zeros_like(inner_products)
+
+    m = s_array.shape[0]
+    loop_indices = np.flip(np.arange(m))
+
+    for ii in loop_indices:
+        si = s_array[ii]
+        yi = s_array[ii]
+        alphas[ii] = rho[ii] * np.dot(si, q)
+        q = q-alphas[ii]*yi
+
+    r = Hinv_approx @ q
+
+    for ii in np.flip(loop_indices):
+        si = s_array[ii]
+        yi = s_array[ii]
+        betas[ii] = rho[ii]* np.dot(yi, r)
+        r = r + si*(alphas[ii] - betas[ii])
+
+    return -r[:, None]

@@ -1,7 +1,7 @@
 import numpy as np
 from algorithms.algorithms import gradient_descent, newton, bfgs, lbfgs
 from algorithms.base import SolverAlgorithm
-from algorithms.utils import VectorCircularBuffer, BFGSState, InternalAlgorithmState
+from algorithms.utils import VectorCircularBuffer, LBFGSState, InternalAlgorithmState
 from objectives.base import SolverObjective
 from options.base import SolverOptions
 from objectives.functions import rosen_func, rosen_grad, rosen_Hess, quadratic_func, quadratic_grad, quadratic_Hess
