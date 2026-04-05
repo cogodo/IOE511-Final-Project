@@ -2,7 +2,7 @@ import numpy as np
 import scipy.io as sio
 from objectives.base import SolverObjective
 from algorithms.base import SolverAlgorithm
-from options.base import SolverOptions, LineSearchOptions, CGOptions, TrustRegionOptions
+from options.base import SolverOptions, LineSearchOptions, CGOptions, TrustRegionOptions, LBFGSOptions
 from optSolver import optSolver
 
 quad2_data = sio.loadmat('objectives/data/quadratic2.mat')
@@ -46,7 +46,10 @@ newton_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe
 bfgs_wolfe_method = SolverAlgorithm(name='BFGS')
 bfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), max_iterations=max_iters, term_tol=epsilon, sy_tol=epsilon_sy)
 
-
+# set up Wolfe BFGS method and options
+lbfgs_wolfe_method = SolverAlgorithm(name='L-BFGS')
+lbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), max_iterations=max_iters,
+                                    term_tol=epsilon, sy_tol=epsilon_sy, lbfgs=LBFGSOptions(history_length=50))
 # run quad2 problem with GD
 # x, f = optSolver(problem=quad2_problem, method=GD_const_method, options=GD_const_options)
 # print(f'x: {x}, f: {f}')
@@ -73,6 +76,10 @@ bfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe',
 
 # run rosenbrock with BFGS
 x, f = optSolver(problem=rosen_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
+
+#run rosenbrock with LBFGS
+# x, f = optSolver(problem=rosen_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
+
 print(f'x: {x}, f: {f}')
 # TODO: more things to track (with plots hopefully) - num iterations to converge, time to converge, total memory(?)
 # put multiple algos on the same plot when it makes sense to compare for the paper / poster

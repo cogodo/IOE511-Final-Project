@@ -8,7 +8,8 @@ import numpy.typing as npt
 
 Array = npt.NDArray[np.float64]
 
-from algorithms.utils import StepResults
+from algorithms.utils import StepResults, InternalAlgorithmState
+
 
 # NOTE: needed to set frozen to false here to run without error
 @dataclass(frozen=False, slots=True)

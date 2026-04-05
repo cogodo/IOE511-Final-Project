@@ -3,7 +3,7 @@ import numpy.typing as npt
 
 Array = npt.NDArray[np.float64]
 
-from algorithms.utils import StepResults, backtracking_line_search, weak_wolfe_line_search
+from algorithms.utils import StepResults, backtracking_line_search, weak_wolfe_line_search, VectorCircularBuffer, two_loop_recursion
 from objectives.base import SolverObjective
 from options.base import SolverOptions
 
@@ -121,7 +121,42 @@ def bfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObje
     return results
 
 
+def lbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, s_buffer: VectorCircularBuffer, y_buffer: VectorCircularBuffer,objective: SolverObjective, options: SolverOptions):
 
+    d = two_loop_recursion(g, Hinv_approx, s_buffer, y_buffer)
+    # # search direction is the Newton direction, but with the inverse Hessian approximation
+    # d = -Hinv_approx @ g
+    #
+    # # determine the step size
+    # alpha = 0
+    # match options.line_search.method:
+    #     case 'Wolfe':
+    #         alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+    #
+    # x_new = x + alpha * d
+    # f_new = objective.value(x_new)
+    # g_new = objective.grad(x_new)
+    # Hinv_approx_new = Hinv_approx
+    #
+    # # update the inverse Hessian approximation, only if sy tolerance is met
+    # s_k = x_new - x
+    # y_k = g_new - g
+    #
+    # if s_k.transpose() @ y_k >= options.sy_tol * np.linalg.norm(s_k) * np.linalg.norm(y_k):
+    #     Hinv_approx_new = (np.eye(np.size(Hinv_approx, 0)) - (s_k @ y_k.transpose()) / (
+    #                 s_k.transpose() @ y_k)) @ Hinv_approx @ (
+    #                                   np.eye(np.size(Hinv_approx, 0)) - (y_k @ s_k.transpose()) / (
+    #                                       s_k.transpose() @ y_k)) + (s_k @ s_k.transpose()) / (s_k.transpose() @ y_k)
+    #
+    # results = StepResults(x_new=x_new,
+    #                       f_new=f_new,
+    #                       g_new=g_new,
+    #                       Hinv_approx_new=Hinv_approx_new,
+    #                       d=d,
+    #                       alpha=alpha)
+    #
+    # return results
+    pass
 
 def dfp(objective: SolverObjective, x: Array, options: SolverOptions):
     pass

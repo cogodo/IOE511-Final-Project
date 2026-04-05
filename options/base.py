@@ -25,6 +25,10 @@ class CGOptions:
     max_iterations: int = 100
 
 @dataclass(frozen=True, slots=True)
+class LBFGSOptions:
+    history_length: int = 10
+
+@dataclass(frozen=True, slots=True)
 class SolverOptions:
     term_tol: float = 1e-6
     max_iterations: int = 1000
@@ -33,4 +37,5 @@ class SolverOptions:
     line_search: LineSearchOptions = LineSearchOptions()
     trust_region: TrustRegionOptions = TrustRegionOptions()
     cg: CGOptions = CGOptions
+    lbfgs: LBFGSOptions = LBFGSOptions
     

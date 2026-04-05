@@ -1,6 +1,7 @@
 import numpy as np
-from algorithms.algorithms import gradient_descent, newton, bfgs
+from algorithms.algorithms import gradient_descent, newton, bfgs, lbfgs
 from algorithms.base import SolverAlgorithm
+from algorithms.utils import VectorCircularBuffer, BFGSState, InternalAlgorithmState
 from objectives.base import SolverObjective
 from options.base import SolverOptions
 from objectives.functions import rosen_func, rosen_grad, rosen_Hess, quadratic_func, quadratic_grad, quadratic_Hess
@@ -33,6 +34,8 @@ def setMethod(method: SolverAlgorithm):
             method.step = lambda x, f, g, H, Hinv_approx, objective, options: newton(x=x, f=f, g=g, H=H, objective=objective, options=options)
         case 'BFGS':
             method.step = lambda x, f, g, H, Hinv_approx, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
+        case 'L-BFGS':
+            method.step = lambda x, f, g, H, Hinv_approx, s_buffer, y_buffer, objective, options: lbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, s_buffer=s_buffer, y_buffer = y_buffer,objective=objective, options=options)
         case _:
             raise ValueError("Method name does not exist!")
     return method
@@ -57,6 +60,12 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     norm_g = np.linalg.norm(g, ord=np.inf)
     norm_g_x0 = norm_g
 
+    match method.name:
+        case 'L-BFGS':
+            s_buffer = VectorCircularBuffer(capacity=options.lbfgs.history_length, vector_size=x.size, dtype=x.dtype)
+            y_buffer = VectorCircularBuffer(capacity=options.lbfgs.history_length, vector_size=x.size, dtype=x.dtype)
+
+
     # set initial iteration counter
     k = 0
 
@@ -64,8 +73,15 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     while not (norm_g <= options.term_tol*max(norm_g_x0, 1) or k >= options.max_iterations):
 
         # take a step in the method
-        results = method.step(x, f, g, H, Hinv_approx, problem, options)
-            
+        match method.name:
+            case 'L-BFGS':
+                results = method.step(x, f, g, H, Hinv_approx, s_buffer, y_buffer, problem, options)
+                lbfgs_internal_state = results.internal_state
+                s_buffer = lbfgs_internal_state.s_buffer
+                y_buffer = lbfgs_internal_state.y_buffer
+            case _:
+                results = method.step(x, f, g, H, Hinv_approx, problem, options)
+
         # update function values
         x = results.x_new
         f = results.f_new
