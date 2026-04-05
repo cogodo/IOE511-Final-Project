@@ -143,11 +143,6 @@ def lbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, s_buffer: VectorCirc
 
     s_buffer.append(np.squeeze(s_k))
     y_buffer.append(np.squeeze(y_k))
-    if s_k.transpose() @ y_k >= options.sy_tol * np.linalg.norm(s_k) * np.linalg.norm(y_k):
-        Hinv_approx_new = (np.eye(np.size(Hinv_approx, 0)) - (s_k @ y_k.transpose()) / (
-                    s_k.transpose() @ y_k)) @ Hinv_approx @ (
-                                      np.eye(np.size(Hinv_approx, 0)) - (y_k @ s_k.transpose()) / (
-                                          s_k.transpose() @ y_k)) + (s_k @ s_k.transpose()) / (s_k.transpose() @ y_k)
 
     results = StepResults(x_new=x_new,
                           f_new=f_new,

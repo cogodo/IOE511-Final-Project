@@ -145,15 +145,21 @@ def two_loop_recursion(g: Array, Hinv_approx: Array, s_buffer: VectorCircularBuf
 
     for ii in loop_indices:
         si = s_array[ii]
-        yi = s_array[ii]
+        yi = y_array[ii]
         alphas[ii] = rho[ii] * np.dot(si, q)
         q = q-alphas[ii]*yi
 
-    r = Hinv_approx @ q
+    # if m > 0:
+    #     gamma_k = inner_products[0] / np.dot(y_array[0], y_array[0])
+    # else:
+    #     gamma_k = 1.0
+
+    gamma_k = 1
+    r = gamma_k * Hinv_approx @ q
 
     for ii in np.flip(loop_indices):
         si = s_array[ii]
-        yi = s_array[ii]
+        yi = y_array[ii]
         betas[ii] = rho[ii]* np.dot(yi, r)
         r = r + si*(alphas[ii] - betas[ii])
 
