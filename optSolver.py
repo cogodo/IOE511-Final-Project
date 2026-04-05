@@ -1,5 +1,5 @@
 import numpy as np
-from algorithms.algorithms import gradient_descent, newton
+from algorithms.algorithms import gradient_descent, newton, bfgs
 from algorithms.base import SolverAlgorithm
 from objectives.base import SolverObjective
 from options.base import SolverOptions
@@ -28,9 +28,13 @@ def setMethod(method: SolverAlgorithm):
     # set the step for every iteratiokn
     match method.name:
         case 'GradientDescent':
-            method.step = lambda x, f, g, H, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
         case 'Newton':
-            method.step = newton
+            method.step = lambda x, f, g, H, Hinv_approx, objective, options: newton(x=x, f=f, g=g, H=H, objective=objective, options=options)
+        case 'BFGS':
+            method.step = lambda x, f, g, H, Hinv_approx, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
+        case _:
+            raise ValueError("Method name does not exist!")
     return method
 
 def setOptions(options: SolverOptions):
@@ -49,6 +53,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     f = problem.value(x)
     g = problem.grad(x)
     H = problem.hess(x)
+    Hinv_approx = np.eye(np.size(H, 0))
     norm_g = np.linalg.norm(g, ord=np.inf)
     norm_g_x0 = norm_g
 
@@ -59,7 +64,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     while not (norm_g <= options.term_tol*max(norm_g_x0, 1) or k >= options.max_iterations):
 
         # take a step in the method
-        results = method.step(x, f, g, H, problem, options)
+        results = method.step(x, f, g, H, Hinv_approx, problem, options)
             
         # update function values
         x = results.x_new
@@ -67,6 +72,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
         g = results.g_new
         norm_g = np.linalg.norm(g, ord=np.inf)
         H = results.H_new
+        Hinv_approx = results.Hinv_approx_new
 
         # increment iteration count
         k = k + 1

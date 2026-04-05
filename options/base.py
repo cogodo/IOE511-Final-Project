@@ -29,6 +29,7 @@ class SolverOptions:
     term_tol: float = 1e-6
     max_iterations: int = 1000
     cholesky_beta: float = 1e-5
+    sy_tol: float = 1e-5
     line_search: LineSearchOptions = LineSearchOptions()
     trust_region: TrustRegionOptions = TrustRegionOptions()
     cg: CGOptions = CGOptions
