@@ -56,8 +56,25 @@ def gradient_descent(x: Array, f: float, g: Array, objective: SolverObjective, o
 
 def newton(x: Array, f: float, g: Array, H: Array, objective: SolverObjective, options: SolverOptions):
 
-    # search direction is -inv(H) * g
-    d = -np.linalg.inv(H) @ g
+    # ensure that the Hessian is positive definite, if not, apply Newton modification
+    n_k = 0
+    if np.diag(H).min() <= 0:
+        n_k = -np.diag(H).min() + options.cholesky_beta
+
+    # attempt Cholesky factorization on H + n_k * I until success
+    cholesky_success = False
+    while not cholesky_success:
+        try:
+            _ = np.linalg.cholesky(H + n_k * np.eye(np.size(H, 0)))
+            cholesky_success = True
+
+        except np.linalg.LinAlgError:
+
+            # modify n_k upon failure, then try again
+            n_k = max(2 * n_k, options.cholesky_beta)
+
+    # search direction is -inv(H + n_k * I) * g
+    d = -np.linalg.inv(H + n_k * np.eye(np.size(H, 0))) @ g
     
     # determine the step size
     alpha = 0
