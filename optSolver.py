@@ -1,5 +1,5 @@
 import numpy as np
-from algorithms.algorithms import gradient_descent, newton, bfgs, lbfgs
+from algorithms.algorithms import gradient_descent, newton, bfgs, lbfgs, dfp
 from algorithms.base import SolverAlgorithm
 from algorithms.utils import VectorCircularBuffer, LBFGSState
 from objectives.base import SolverObjective
@@ -36,6 +36,8 @@ def setMethod(method: SolverAlgorithm):
             method.step = lambda x, f, g, H, Hinv_approx, internal_state, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'L-BFGS':
             method.step = lambda x, f, g, H, Hinv_approx, internal_state, objective, options: lbfgs(x=x, f=f, g=g, internal_state=internal_state, objective=objective, options=options)
+        case 'DFP':
+            method.step = lambda x, f, g, H, Hinv_approx, internal_state, objective, options: dfp(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case _:
             raise ValueError("Method name does not exist!")
     return method

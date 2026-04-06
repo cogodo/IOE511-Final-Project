@@ -123,7 +123,6 @@ def bfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObje
 
 def lbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: SolverObjective, options: SolverOptions):
 
-
     Hinv_approx_init = np.eye(np.size(x, 0))
     if options.bfgs.Hinv_approx_init is not None:
         Hinv_approx_init = options.bfgs.Hinv_approx_init
@@ -161,5 +160,38 @@ def lbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: S
 
     return results
 
-def dfp(objective: SolverObjective, x: Array, options: SolverOptions):
-    pass
+def dfp(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjective, options: SolverOptions):
+
+    # search direction is the Newton direction, but with the inverse Hessian approximation
+    d = -Hinv_approx @ g
+
+    # determine the step size
+    alpha = 0
+    match options.line_search.method:
+        case 'Backtracking':
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case 'Wolfe':
+            alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case _:
+            raise ValueError("Line search method is invalid!")
+    
+    x_new = x + alpha*d
+    f_new = objective.value(x_new)
+    g_new = objective.grad(x_new)
+    Hinv_approx_new = Hinv_approx
+
+    # update the inverse Hessian approximation, only if sy tolerance is met
+    s_k = x_new - x
+    y_k = g_new - g
+    
+    if s_k.transpose() @ y_k >= options.bfgs.sy_tol * np.linalg.norm(s_k) * np.linalg.norm(y_k):
+        Hinv_approx_new = Hinv_approx - (Hinv_approx @ y_k @ y_k.transpose() @ Hinv_approx) / (y_k.transpose() @ Hinv_approx @ y_k) + (s_k @ s_k.transpose()) / (s_k.transpose() @ y_k)
+    
+    results = StepResults(x_new=x_new,
+                          f_new=f_new,
+                          g_new=g_new,
+                          Hinv_approx_new=Hinv_approx_new,
+                          d=d,
+                          alpha=alpha)
+    
+    return results

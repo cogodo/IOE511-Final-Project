@@ -50,6 +50,11 @@ bfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe',
 lbfgs_wolfe_method = SolverAlgorithm(name='L-BFGS')
 lbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), max_iterations=max_iters,
                                     term_tol=epsilon, bfgs=BFGSVariantOptions(history_length=2, sy_tol=epsilon_sy))
+
+# set up Wolfe DFP method and options
+dfp_wolfe_method = SolverAlgorithm(name='DFP')
+dfp_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
+
 # run quad2 problem with GD
 # x, f = optSolver(problem=quad2_problem, method=GD_const_method, options=GD_const_options)
 # print(f'x: {x}, f: {f}')
@@ -64,7 +69,6 @@ lbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe'
 # run quad2 problem with Newton
 x, f = optSolver(problem=quad2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
 print(f'x: {x}, f: {f}')
-
 x, f = optSolver(problem=quad2_problem, method=newton_wolfe_method, options=newton_wolfe_options)
 print(f'x: {x}, f: {f}')
 
@@ -78,9 +82,12 @@ print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
 print(f'x: {x}, f: {f}')
 
-#run rosenbrock with LBFGS
+# run rosenbrock with LBFGS
 x, f = optSolver(problem=rosen_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
+print(f'x: {x}, f: {f}')
 
+# run rosenbrock with DFP
+x, f = optSolver(problem=rosen_problem, method=dfp_wolfe_method, options=dfp_wolfe_options)
 print(f'x: {x}, f: {f}')
 # TODO: more things to track (with plots hopefully) - num iterations to converge, time to converge, total memory(?)
 # put multiple algos on the same plot when it makes sense to compare for the paper / poster
