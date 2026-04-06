@@ -41,7 +41,7 @@ def newton(x: Array, f: float, g: Array, H: Array, objective: SolverObjective, o
     # ensure that the Hessian is positive definite, if not, apply Newton modification
     n_k = 0
     if np.diag(H).min() <= 0:
-        n_k = -np.diag(H).min() + options.cholesky_beta
+        n_k = -np.diag(H).min() + options.newton.cholesky_beta
 
     # attempt Cholesky factorization on H + n_k * I until success
     cholesky_success = False
@@ -53,7 +53,7 @@ def newton(x: Array, f: float, g: Array, H: Array, objective: SolverObjective, o
         except np.linalg.LinAlgError:
 
             # modify n_k upon failure, then try again
-            n_k = max(2 * n_k, options.cholesky_beta)
+            n_k = max(2 * n_k, options.newton.cholesky_beta)
 
     # search direction is -inv(H + n_k * I) * g
     d = -np.linalg.inv(H + n_k * np.eye(np.size(H, 0))) @ g

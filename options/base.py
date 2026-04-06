@@ -25,6 +25,10 @@ class CGOptions:
     max_iterations: int = 100
 
 @dataclass(frozen=True, slots=True)
+class NewtonOptions:
+    cholesky_beta: float = 1e-5
+
+@dataclass(frozen=True, slots=True)
 class LBFGSOptions:
     history_length: int = 10
 
@@ -32,10 +36,10 @@ class LBFGSOptions:
 class SolverOptions:
     term_tol: float = 1e-6
     max_iterations: int = 1000
-    cholesky_beta: float = 1e-5
     sy_tol: float = 1e-5
     line_search: LineSearchOptions = LineSearchOptions()
     trust_region: TrustRegionOptions = TrustRegionOptions()
-    cg: CGOptions = CGOptions
-    lbfgs: LBFGSOptions = LBFGSOptions
+    cg: CGOptions = CGOptions()
+    newton: NewtonOptions = NewtonOptions()
+    lbfgs: LBFGSOptions = LBFGSOptions()
     
