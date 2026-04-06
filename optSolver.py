@@ -1,7 +1,7 @@
 import numpy as np
 from algorithms.algorithms import gradient_descent, newton, bfgs, lbfgs
 from algorithms.base import SolverAlgorithm
-from algorithms.utils import VectorCircularBuffer, LBFGSState, InternalAlgorithmState
+from algorithms.utils import VectorCircularBuffer, LBFGSState
 from objectives.base import SolverObjective
 from options.base import SolverOptions
 from objectives.functions import rosen_func, rosen_grad, rosen_Hess, quadratic_func, quadratic_grad, quadratic_Hess
@@ -29,13 +29,13 @@ def setMethod(method: SolverAlgorithm):
     # set the step for every iteratiokn
     match method.name:
         case 'GradientDescent':
-            method.step = lambda x, f, g, H, Hinv_approx, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, internal_state, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
         case 'Newton':
-            method.step = lambda x, f, g, H, Hinv_approx, objective, options: newton(x=x, f=f, g=g, H=H, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, internal_state, objective, options: newton(x=x, f=f, g=g, H=H, objective=objective, options=options)
         case 'BFGS':
-            method.step = lambda x, f, g, H, Hinv_approx, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, internal_state, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'L-BFGS':
-            method.step = lambda x, f, g, H, Hinv_approx, s_buffer, y_buffer, objective, options: lbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, s_buffer=s_buffer, y_buffer = y_buffer,objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, internal_state, objective, options: lbfgs(x=x, f=f, g=g, internal_state=internal_state, objective=objective, options=options)
         case _:
             raise ValueError("Method name does not exist!")
     return method
@@ -57,6 +57,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     g = problem.grad(x)
     H = problem.hess(x)
     Hinv_approx = np.eye(np.size(H, 0))
+    internal_state = None
     norm_g = np.linalg.norm(g, ord=np.inf)
     norm_g_x0 = norm_g
 
@@ -64,11 +65,10 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     if options.bfgs.Hinv_approx_init is not None:
         Hinv_approx = options.bfgs.Hinv_approx_init
 
-    match method.name:
-        case 'L-BFGS':
-            s_buffer = VectorCircularBuffer(capacity=options.bfgs.history_length, vector_size=x.size, dtype=x.dtype)
-            y_buffer = VectorCircularBuffer(capacity=options.bfgs.history_length, vector_size=x.size, dtype=x.dtype)
-
+    # set up internal state and initial Hessian approximation for each iteration
+    if method.name == 'L-BFGS':
+        internal_state = LBFGSState(s_buffer=VectorCircularBuffer(capacity=options.bfgs.history_length, vector_size=x.size, dtype=x.dtype),
+                                    y_buffer=VectorCircularBuffer(capacity=options.bfgs.history_length, vector_size=x.size, dtype=x.dtype))
 
     # set initial iteration counter
     k = 0
@@ -77,22 +77,16 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     while not (norm_g <= options.term_tol*max(norm_g_x0, 1) or k >= options.max_iterations):
 
         # take a step in the method
-        match method.name:
-            case 'L-BFGS':
-                results = method.step(x, f, g, H, Hinv_approx, s_buffer, y_buffer, problem, options)
-                lbfgs_internal_state = results.internal_state
-                s_buffer = lbfgs_internal_state.s_buffer
-                y_buffer = lbfgs_internal_state.y_buffer
-            case _:
-                results = method.step(x, f, g, H, Hinv_approx, problem, options)
+        results = method.step(x, f, g, H, Hinv_approx, internal_state, problem, options)
 
         # update function values
         x = results.x_new
         f = results.f_new
         g = results.g_new
-        norm_g = np.linalg.norm(g, ord=np.inf)
         H = results.H_new
         Hinv_approx = results.Hinv_approx_new
+        internal_state = results.internal_state
+        norm_g = np.linalg.norm(g, ord=np.inf)
 
         # increment iteration count
         k = k + 1

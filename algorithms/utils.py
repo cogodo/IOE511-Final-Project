@@ -121,15 +121,12 @@ class VectorCircularBuffer:
             for vector in chunk:
                 yield vector
 
-
-
-
 @dataclass(frozen=True, slots=True)
 class LBFGSState(InternalAlgorithmState):
     s_buffer: VectorCircularBuffer
     y_buffer: VectorCircularBuffer
 
-def two_loop_recursion(g: Array, Hinv_approx: Array, s_buffer: VectorCircularBuffer, y_buffer: VectorCircularBuffer):
+def two_loop_recursion(g: Array, Hinv_approx_init: Array, s_buffer: VectorCircularBuffer, y_buffer: VectorCircularBuffer):
     q = np.squeeze(np.copy(g))
 
     s_array = s_buffer.get_ordered()
@@ -149,13 +146,8 @@ def two_loop_recursion(g: Array, Hinv_approx: Array, s_buffer: VectorCircularBuf
         alphas[ii] = rho[ii] * np.dot(si, q)
         q = q-alphas[ii]*yi
 
-    # if m > 0:
-    #     gamma_k = inner_products[0] / np.dot(y_array[0], y_array[0])
-    # else:
-    #     gamma_k = 1.0
-
     gamma_k = 1
-    r = gamma_k * Hinv_approx @ q
+    r = gamma_k * Hinv_approx_init @ q
 
     for ii in np.flip(loop_indices):
         si = s_array[ii]

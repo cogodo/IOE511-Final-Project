@@ -3,8 +3,7 @@ import numpy.typing as npt
 
 Array = npt.NDArray[np.float64]
 
-from algorithms.utils import StepResults, backtracking_line_search, weak_wolfe_line_search, VectorCircularBuffer, \
-    two_loop_recursion, LBFGSState
+from algorithms.utils import StepResults, backtracking_line_search, weak_wolfe_line_search, two_loop_recursion, LBFGSState
 from objectives.base import SolverObjective
 from options.base import SolverOptions
 
@@ -122,9 +121,14 @@ def bfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObje
     return results
 
 
-def lbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, s_buffer: VectorCircularBuffer, y_buffer: VectorCircularBuffer,objective: SolverObjective, options: SolverOptions):
+def lbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: SolverObjective, options: SolverOptions):
 
-    d = two_loop_recursion(g, Hinv_approx, s_buffer, y_buffer)
+
+    Hinv_approx_init = np.eye(np.size(x, 0))
+    if options.bfgs.Hinv_approx_init is not None:
+        Hinv_approx_init = options.bfgs.Hinv_approx_init
+
+    d = two_loop_recursion(g=g, Hinv_approx_init=Hinv_approx_init, s_buffer=internal_state.s_buffer, y_buffer=internal_state.y_buffer)
 
     # determine the step size
     alpha = 0
@@ -139,22 +143,21 @@ def lbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, s_buffer: VectorCirc
     x_new = x + alpha * d
     f_new = objective.value(x_new)
     g_new = objective.grad(x_new)
-    Hinv_approx_new = Hinv_approx
 
-    # update the inverse Hessian approximation, only if sy tolerance is met
+    # update the internal state, only if sy tolerance is met
     s_k = x_new - x
     y_k = g_new - g
 
-    s_buffer.append(np.squeeze(s_k))
-    y_buffer.append(np.squeeze(y_k))
+    if s_k.transpose() @ y_k >= options.bfgs.sy_tol * np.linalg.norm(s_k) * np.linalg.norm(y_k):
+        internal_state.s_buffer.append(np.squeeze(s_k))
+        internal_state.y_buffer.append(np.squeeze(y_k))
 
     results = StepResults(x_new=x_new,
                           f_new=f_new,
                           g_new=g_new,
-                          Hinv_approx_new=Hinv_approx_new,
                           d=d,
                           alpha=alpha,
-                          internal_state=LBFGSState(s_buffer=s_buffer, y_buffer=y_buffer))
+                          internal_state=internal_state)
 
     return results
 
