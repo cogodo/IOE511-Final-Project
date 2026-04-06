@@ -1,4 +1,8 @@
 from dataclasses import dataclass
+import numpy as np
+import numpy.typing as npt
+
+Array = npt.NDArray[np.float64]
 
 # NOTE: what is rho used for?
 @dataclass(frozen=True, slots=True)
@@ -29,17 +33,18 @@ class NewtonOptions:
     cholesky_beta: float = 1e-5
 
 @dataclass(frozen=True, slots=True)
-class LBFGSOptions:
+class BFGSVariantOptions:
+    sy_tol: float = 1e-5
     history_length: int = 10
+    Hinv_approx_init: Array = None
 
 @dataclass(frozen=True, slots=True)
 class SolverOptions:
     term_tol: float = 1e-6
     max_iterations: int = 1000
-    sy_tol: float = 1e-5
     line_search: LineSearchOptions = LineSearchOptions()
     trust_region: TrustRegionOptions = TrustRegionOptions()
     cg: CGOptions = CGOptions()
     newton: NewtonOptions = NewtonOptions()
-    lbfgs: LBFGSOptions = LBFGSOptions()
+    bfgs: BFGSVariantOptions = BFGSVariantOptions()
     

@@ -60,10 +60,14 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     norm_g = np.linalg.norm(g, ord=np.inf)
     norm_g_x0 = norm_g
 
+    # set up initial Hessian guesses for bfgs variants
+    if options.bfgs.Hinv_approx_init is not None:
+        Hinv_approx = options.bfgs.Hinv_approx_init
+
     match method.name:
         case 'L-BFGS':
-            s_buffer = VectorCircularBuffer(capacity=options.lbfgs.history_length, vector_size=x.size, dtype=x.dtype)
-            y_buffer = VectorCircularBuffer(capacity=options.lbfgs.history_length, vector_size=x.size, dtype=x.dtype)
+            s_buffer = VectorCircularBuffer(capacity=options.bfgs.history_length, vector_size=x.size, dtype=x.dtype)
+            y_buffer = VectorCircularBuffer(capacity=options.bfgs.history_length, vector_size=x.size, dtype=x.dtype)
 
 
     # set initial iteration counter
