@@ -20,12 +20,10 @@ def gradient_descent(x: Array, f: float, g: Array, objective: SolverObjective, o
             alpha = options.line_search.const_alpha
         case 'Backtracking':
             alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
-
         case 'Wolfe':
             alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
-
         case _:
-            raise ValueError("Line search method does not exist!")
+            raise ValueError("Line search method is invalid!")
 
     x_new = x + alpha*d
 
@@ -65,12 +63,10 @@ def newton(x: Array, f: float, g: Array, H: Array, objective: SolverObjective, o
     match options.line_search.method:
         case 'Backtracking':
             alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
-
         case 'Wolfe':
             alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
-                
         case _:
-            raise ValueError("Line search method does not exist!")
+            raise ValueError("Line search method is invalid!")
 
     x_new = x + alpha*d
 
@@ -97,8 +93,12 @@ def bfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObje
     # determine the step size
     alpha = 0
     match options.line_search.method:
+        case 'Backtracking':
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
         case 'Wolfe':
             alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case _:
+            raise ValueError("Line search method is invalid!")
     
     x_new = x + alpha*d
     f_new = objective.value(x_new)
@@ -129,8 +129,12 @@ def lbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, s_buffer: VectorCirc
     # determine the step size
     alpha = 0
     match options.line_search.method:
+        case 'Backtracking':
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
         case 'Wolfe':
             alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case _:
+            raise ValueError("Line search method is invalid!")
 
     x_new = x + alpha * d
     f_new = objective.value(x_new)
