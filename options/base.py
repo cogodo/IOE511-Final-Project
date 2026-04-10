@@ -38,6 +38,8 @@ class BFGSVariantOptions:
     history_length: int = 10
     Hinv_approx_init: Array = None
     H_approx_init: Array = None
+    cautious_tol: float = 1e-5
+    cautious_alpha: int = 2
 
 @dataclass(frozen=True, slots=True)
 class SolverOptions:

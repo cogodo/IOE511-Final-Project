@@ -138,7 +138,6 @@ def dbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, H_approx: Array, obj
     x_new = x + alpha*d
     f_new = objective.value(x_new)
     g_new = objective.grad(x_new)
-    Hinv_approx_new = Hinv_approx
 
     s_k = x_new - x
     y_k = g_new - g
@@ -159,6 +158,42 @@ def dbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, H_approx: Array, obj
                           g_new=g_new,
                           Hinv_approx_new=Hinv_approx_new,
                           H_approx_new=H_approx_new,
+                          d=d,
+                          alpha=alpha)
+    
+    return results
+
+def cbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjective, options: SolverOptions):
+
+    # search direction is the Newton direction, but with the inverse Hessian approximation
+    d = -Hinv_approx @ g
+
+    # determine the step size
+    alpha = 0
+    match options.line_search.method:
+        case 'Backtracking':
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case 'Wolfe':
+            alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case _:
+            raise ValueError("Line search method is invalid!")
+    
+    x_new = x + alpha*d
+    f_new = objective.value(x_new)
+    g_new = objective.grad(x_new)
+    Hinv_approx_new = Hinv_approx
+
+    # update the inverse Hessian approximation, only if the CAUTIOUS BFGS tolerance is met
+    s_k = x_new - x
+    y_k = g_new - g
+    
+    if y_k.transpose() @ s_k >= options.bfgs.cautious_tol * pow(np.linalg.norm(g), options.bfgs.cautious_alpha) * pow(np.linalg.norm(s_k), 2):
+        Hinv_approx_new = (np.eye(np.size(Hinv_approx, 0)) - (s_k @ y_k.transpose()) / (s_k.transpose() @ y_k)) @ Hinv_approx @ (np.eye(np.size(Hinv_approx, 0)) - (y_k @ s_k.transpose()) / (s_k.transpose() @ y_k)) + (s_k @ s_k.transpose()) / (s_k.transpose() @ y_k)
+    
+    results = StepResults(x_new=x_new,
+                          f_new=f_new,
+                          g_new=g_new,
+                          Hinv_approx_new=Hinv_approx_new,
                           d=d,
                           alpha=alpha)
     
