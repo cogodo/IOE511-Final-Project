@@ -51,6 +51,10 @@ newton_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe
 tr_newton_cg_method = SolverAlgorithm(name='TR-Newton-CG')
 tr_newton_cg_options = SolverOptions()
 
+# set up TR SR1 method with CG subproblem solver
+tr_sr1_cg_method = SolverAlgorithm(name='TR-SR1-CG')
+tr_sr1_cg_options = SolverOptions()
+
 # set up Wolfe BFGS method and options
 bfgs_wolfe_method = SolverAlgorithm(name='BFGS')
 bfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
@@ -84,10 +88,10 @@ dfp_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', 
 # print(f'x: {x}, f: {f}')
 
 # run quad2 problem with Newton
-x, f = optSolver(problem=quad2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
-print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=quad2_problem, method=newton_wolfe_method, options=newton_wolfe_options)
-print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=quad2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
+# print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=quad2_problem, method=newton_wolfe_method, options=newton_wolfe_options)
+# print(f'x: {x}, f: {f}')
 
 # run rosenbrock-2 with all methods
 x, f = optSolver(problem=rosen_2_problem, method=GD_backtracking_method, options=GD_backtracking_options)
@@ -100,6 +104,8 @@ x, f = optSolver(problem=rosen_2_problem, method=newton_wolfe_method, options=ne
 print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_2_problem, method=tr_newton_cg_method, options=tr_newton_cg_options)
 print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=rosen_2_problem, method=tr_sr1_cg_method, options=tr_newton_cg_options)
+# print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_2_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
 print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_2_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)

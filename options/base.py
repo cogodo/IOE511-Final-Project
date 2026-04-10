@@ -41,6 +41,7 @@ class BFGSVariantOptions:
     H_approx_init: Array = None
     cautious_tol: float = 1e-5
     cautious_alpha: int = 2
+    sr1_tol: float = 1e-5
 
 @dataclass(frozen=True, slots=True)
 class SolverOptions:

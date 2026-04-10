@@ -1,5 +1,5 @@
 import numpy as np
-from algorithms.algorithms import gradient_descent, newton, bfgs, dbfgs, cbfgs, lbfgs, dfp, trnewtoncg
+from algorithms.algorithms import gradient_descent, newton, bfgs, dbfgs, cbfgs, lbfgs, dfp, trnewtoncg, trsr1cg
 from algorithms.base import SolverAlgorithm
 from algorithms.utils import VectorCircularBuffer, LBFGSState
 from objectives.base import SolverObjective
@@ -41,6 +41,8 @@ def setMethod(method: SolverAlgorithm):
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: newton(x=x, f=f, g=g, H=H, objective=objective, options=options)
         case 'TR-Newton-CG':
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: trnewtoncg(x=x, f=f, g=g, H=H, delta=delta, objective=objective, options=options)
+        case 'TR-SR1-CG':
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: trsr1cg(x=x, f=f, g=g, H_approx=H_approx, delta=delta, objective=objective, options=options)
         case 'BFGS':
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'D-BFGS':

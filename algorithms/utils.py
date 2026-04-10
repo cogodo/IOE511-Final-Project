@@ -162,6 +162,7 @@ def two_loop_recursion(g: Array, Hinv_approx_init: Array, s_buffer: VectorCircul
 def eval_m_k(f_k: Array, g_k: Array, B_k: Array, d: Array):
     return f_k + g_k.transpose() @ d + 0.5 * d.transpose() @ B_k @ d
 
+# TODO: what to return when max iterations is exceeded...right now i'm returning z
 def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
     
     z = np.zeros(shape=(np.size(g, 0), 1))
@@ -210,6 +211,21 @@ def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
         p = -r + beta * p
 
         j = j + 1
+    return z
+
+def update_tr(rho: float, x: Array, d: Array, delta: float, options: SolverOptions):
+
+    # adjust the trust region radius and x depending on well m_k approximates f
+    if rho > options.trust_region.c1:
+        x_new = x + d
+        if rho > options.trust_region.c2:
+            delta_new = 2 * delta
+            return x_new, delta_new
+        return x_new, delta
+        
+    else:
+        delta_new = 0.5 * delta
+        return x, delta_new
             
 
     

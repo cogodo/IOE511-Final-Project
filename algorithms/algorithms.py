@@ -3,7 +3,7 @@ import numpy.typing as npt
 
 Array = npt.NDArray[np.float64]
 
-from algorithms.utils import StepResults, backtracking_line_search, weak_wolfe_line_search, two_loop_recursion, cg, eval_m_k, LBFGSState
+from algorithms.utils import StepResults, backtracking_line_search, weak_wolfe_line_search, two_loop_recursion, cg, eval_m_k, update_tr, LBFGSState
 from objectives.base import SolverObjective
 from options.base import SolverOptions
 
@@ -84,15 +84,8 @@ def trnewtoncg(x: Array, f: Array, g: Array, H: Array, delta: float, objective: 
     d = cg(f=f, g=g, B=H, delta=delta, options=options)
     rho = (f - objective.value(x + d)) / (eval_m_k(f_k=f, g_k=g, B_k=H, d=np.zeros(np.shape(x))) - eval_m_k(f_k=f, g_k=g, B_k=H, d=d))
 
-    x_new = x
-    delta_new = delta
-
-    if rho > options.trust_region.c1:
-        x_new = x + d
-        if rho > options.trust_region.c2:
-            delta_new = 2 * delta
-    else:
-        delta_new = 0.5 * delta
+    # trust region update
+    x_new, delta_new = update_tr(rho=rho, x=x, d=d, delta=delta, options=options)
 
     results = StepResults(x_new=x_new,
                           f_new=objective.value(x_new),
@@ -104,11 +97,34 @@ def trnewtoncg(x: Array, f: Array, g: Array, H: Array, delta: float, objective: 
     return results
 
 
-def trsr1cg(objective: SolverObjective, x: Array, options: SolverOptions):
-    pass
+def trsr1cg(x: Array, f: Array, g: Array, H_approx: Array, delta: float, objective: SolverObjective, options: SolverOptions):
 
-def sr1(objective: SolverObjective, x: Array, options: SolverOptions):
-    pass
+    # direction is the solution to the TR subproblem with B_k equal to the SR1 Hessian approximation
+    d = cg(f=f, g=g, B=H_approx, delta=delta, options=options)
+    rho = (f - objective.value(x + d)) / (eval_m_k(f_k=f, g_k=g, B_k=H_approx, d=np.zeros(np.shape(x))) - eval_m_k(f_k=f, g_k=g, B_k=H_approx, d=d))
+
+    # trust region update
+    x_new, delta_new = update_tr(rho=rho, x=x, d=d, delta=delta, options=options)
+    f_new = objective.value(x_new)
+    g_new = objective.grad(x_new)
+    H_approx_new = H_approx
+
+    # update the Hessian approximation, only if the SR1 tolerance is satisfied
+    s_k = x_new - x
+    y_k = g_new - g
+
+    if np.abs((y_k - H_approx @ s_k).transpose() @ s_k) >= options.bfgs.sr1_tol * np.linalg.norm(y_k - H_approx @ s_k) * np.linalg.norm(s_k):
+        H_approx_new = H_approx + ((y_k - H_approx @ s_k) @ (y_k - H_approx @ s_k).transpose()) / ((y_k - H_approx @ s_k).transpose() @ s_k)
+
+    results = StepResults(x_new=x_new,
+                          f_new=f_new,
+                          g_new=g_new,
+                          H_approx_new=H_approx_new,
+                          delta_new=delta_new,
+                          d=d)
+    
+    return results
+
 
 def bfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjective, options: SolverOptions):
     
