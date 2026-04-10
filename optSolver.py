@@ -4,15 +4,22 @@ from algorithms.base import SolverAlgorithm
 from algorithms.utils import VectorCircularBuffer, LBFGSState
 from objectives.base import SolverObjective
 from options.base import SolverOptions
-from objectives.functions import rosen_func, rosen_grad, rosen_Hess, quadratic_func, quadratic_grad, quadratic_Hess
+from objectives.functions import rosen_2_func, rosen_2_grad, rosen_2_Hess,\
+                                rosen_100_func, rosen_100_grad, rosen_100_Hess,\
+                                quadratic_func, quadratic_grad, quadratic_Hess
 
 def setProblem(problem: SolverObjective):
     
     match problem.name:
-        case 'Rosenbrock':
-            problem.value = rosen_func
-            problem.grad = rosen_grad
-            problem.hess = rosen_Hess
+        case 'Rosenbrock-2':
+            problem.value = rosen_2_func
+            problem.grad = rosen_2_grad
+            problem.hess = rosen_2_Hess
+
+        case 'Rosenbrock-100':
+            problem.value = rosen_100_func
+            problem.grad = rosen_100_grad
+            problem.hess = rosen_100_Hess
 
         case 'Quadratic':
             problem.value = lambda x: quadratic_func(A=problem.A, b=problem.b, c=problem.c, x=x)

@@ -19,8 +19,13 @@ epsilon_sy = 1e-5
 # set up the quad2 problem
 quad2_problem = SolverObjective(name='Quadratic', x0=quad2_data['x_0'], A=quad2_data['A'], b=quad2_data['b'], c=quad2_data['c'])
 
-# set up the rosenbrock problem
-rosen_problem = SolverObjective(name='Rosenbrock', x0=np.array([[1.2], [1.2]]))
+# set up the rosenbrock-2 problem
+rosen_2_problem = SolverObjective(name='Rosenbrock-2', x0=np.array([[-1.2], [1]]))
+
+# set up the rosenbrock-100 problem
+rosen_100_starting_point = np.ones(shape=(100,1))
+rosen_100_starting_point[0] = -1.2
+rosen_100_problem = SolverObjective(name='Rosenbrock-100', x0=rosen_100_starting_point)
 
 # set up constant gradient descent method and options
 GD_const_method = SolverAlgorithm(name="GradientDescent")
@@ -80,31 +85,38 @@ print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=quad2_problem, method=newton_wolfe_method, options=newton_wolfe_options)
 print(f'x: {x}, f: {f}')
 
-# run rosenbrock with Newton
-x, f = optSolver(problem=rosen_problem, method=newton_backtracking_method, options=newton_backtracking_options)
+# run rosenbrock-2 with all methods
+x, f = optSolver(problem=rosen_2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
 print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=rosen_problem, method=newton_wolfe_method, options=newton_wolfe_options)
+x, f = optSolver(problem=rosen_2_problem, method=newton_wolfe_method, options=newton_wolfe_options)
 print(f'x: {x}, f: {f}')
-
-# run rosenbrock with BFGS
-x, f = optSolver(problem=rosen_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
+x, f = optSolver(problem=rosen_2_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
 print(f'x: {x}, f: {f}')
-
-# run rosenbrock with DBFGS
-x, f = optSolver(problem=rosen_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)
+x, f = optSolver(problem=rosen_2_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)
 print(f'x: {x}, f: {f}')
-
-# run rosenbrock with CBFGS
-x, f = optSolver(problem=rosen_problem, method=cbfgs_wolfe_method, options=cbfgs_wolfe_options)
+x, f = optSolver(problem=rosen_2_problem, method=cbfgs_wolfe_method, options=cbfgs_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_2_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_2_problem, method=dfp_wolfe_method, options=dfp_wolfe_options)
 print(f'x: {x}, f: {f}')
 
-# run rosenbrock with LBFGS
-x, f = optSolver(problem=rosen_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
+# run rosenbrock-100 with all methods
+x, f = optSolver(problem=rosen_100_problem, method=newton_backtracking_method, options=newton_backtracking_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_100_problem, method=newton_wolfe_method, options=newton_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_100_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_100_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_100_problem, method=cbfgs_wolfe_method, options=cbfgs_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_100_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_100_problem, method=dfp_wolfe_method, options=dfp_wolfe_options)
 print(f'x: {x}, f: {f}')
 
-# run rosenbrock with DFP
-x, f = optSolver(problem=rosen_problem, method=dfp_wolfe_method, options=dfp_wolfe_options)
-print(f'x: {x}, f: {f}')
 # TODO: more things to track (with plots hopefully) - num iterations to converge, time to converge, total memory(?)
 # put multiple algos on the same plot when it makes sense to compare for the paper / poster
 # for individual runs, we probably want 2 loss plots (I think): One in terms of iterations, and one in terms of time
