@@ -17,6 +17,7 @@ class StepResults:
     g_new: Array = None
     H_new: Array = None
     Hinv_approx_new: Array = None
+    H_approx_new: Array = None
     d: Array = None
     alpha: float = None
     internal_state: InternalAlgorithmState = None

@@ -46,6 +46,10 @@ newton_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe
 bfgs_wolfe_method = SolverAlgorithm(name='BFGS')
 bfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
 
+# set up Wolfe DBFGS method and options
+dbfgs_wolfe_method = SolverAlgorithm(name='D-BFGS')
+dbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
+
 # set up Wolfe LBFGS method and options
 lbfgs_wolfe_method = SolverAlgorithm(name='L-BFGS')
 lbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), max_iterations=max_iters,
@@ -80,6 +84,10 @@ print(f'x: {x}, f: {f}')
 
 # run rosenbrock with BFGS
 x, f = optSolver(problem=rosen_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
+print(f'x: {x}, f: {f}')
+
+# run rosenbrock with DBFGS
+x, f = optSolver(problem=rosen_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)
 print(f'x: {x}, f: {f}')
 
 # run rosenbrock with LBFGS

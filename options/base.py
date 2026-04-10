@@ -37,6 +37,7 @@ class BFGSVariantOptions:
     sy_tol: float = 1e-5
     history_length: int = 10
     Hinv_approx_init: Array = None
+    H_approx_init: Array = None
 
 @dataclass(frozen=True, slots=True)
 class SolverOptions:
