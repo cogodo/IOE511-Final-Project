@@ -18,6 +18,7 @@ class StepResults:
     H_new: Array = None
     Hinv_approx_new: Array = None
     H_approx_new: Array = None
+    delta_new: float = None
     d: Array = None
     alpha: float = None
     internal_state: InternalAlgorithmState = None
@@ -157,3 +158,58 @@ def two_loop_recursion(g: Array, Hinv_approx_init: Array, s_buffer: VectorCircul
         r = r + si*(alphas[ii] - betas[ii])
 
     return -r[:, None]
+
+def eval_m_k(f_k: Array, g_k: Array, B_k: Array, d: Array):
+    return f_k + g_k.transpose() @ d + 0.5 * d.transpose() @ B_k @ d
+
+def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
+    
+    z = np.zeros(shape=(np.size(g, 0), 1))
+    r = g
+    p = -g
+
+    if np.linalg.norm(r) < options.cg.term_tol:
+        return z
+    
+    j = 0
+    while j <= options.cg.max_iterations:
+        
+        # if solution found suggests negative curvature, go all the way up to the TR boundary
+        if p.transpose() @ B @ p <= 0:
+            roots = [np.dot(p, p), np.dot(z, p), np.dot(z, z) - delta ** 2]
+            d_0 = z + roots[0] * p
+            d_1 = z + roots[1] * p
+
+            if eval_m_k(f_k=f, g_k=g, B_k=B, d=d_1) < eval_m_k(f_k=f, g_k=g, B_k=B, d=d_0):
+                return d_1
+            else:
+                return d_0
+            
+        alpha = (r.transpose() @ r) / (p.transpose() @ B @ p)
+        z_old = z
+        z = z + alpha * p
+
+        if np.linalg.norm(z) >= delta:
+            a = (p**2).sum()
+            b = np.dot(p.flatten(), z_old.flatten())
+            c = (z_old**2).sum() - delta**2
+            coeffs = [a, b, c]
+            roots = np.roots(coeffs)
+            if (roots[0] < 0):
+                return z_old + roots[1] * p
+            else:
+                return z_old + roots[0] * p
+            
+        r_old = r
+        r = r + alpha * B @ p
+        
+        if np.linalg.norm(r) < options.cg.term_tol:
+            return z
+
+        beta = (r.transpose() @ r) / (r_old.transpose() @ r_old)
+        p = -r + beta * p
+
+        j = j + 1
+            
+
+    

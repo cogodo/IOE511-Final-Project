@@ -20,12 +20,13 @@ class LineSearchOptions:
     
 @dataclass(frozen=True, slots=True)
 class TrustRegionOptions:
-    eta1: float = 0.25
-    eta2: float = 0.75
+    c1: float = 0.25
+    c2: float = 0.75
+    delta_init: float = 1.0
 
 @dataclass(frozen=True, slots=True)
 class CGOptions:
-    term_tol: float = 1e-6
+    term_tol: float = 1e-5
     max_iterations: int = 100
 
 @dataclass(frozen=True, slots=True)

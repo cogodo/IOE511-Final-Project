@@ -47,6 +47,10 @@ newton_backtracking_options = SolverOptions(line_search=LineSearchOptions(method
 newton_wolfe_method = SolverAlgorithm(name='Newton')
 newton_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe'), max_iterations=max_iters, term_tol=epsilon)
 
+# set up TR Newton method with CG subproblem solver
+tr_newton_cg_method = SolverAlgorithm(name='TR-Newton-CG')
+tr_newton_cg_options = SolverOptions()
+
 # set up Wolfe BFGS method and options
 bfgs_wolfe_method = SolverAlgorithm(name='BFGS')
 bfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
@@ -86,9 +90,15 @@ x, f = optSolver(problem=quad2_problem, method=newton_wolfe_method, options=newt
 print(f'x: {x}, f: {f}')
 
 # run rosenbrock-2 with all methods
+x, f = optSolver(problem=rosen_2_problem, method=GD_backtracking_method, options=GD_backtracking_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_2_problem, method=GD_wolfe_method, options=GD_wolfe_options)
+print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
 print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_2_problem, method=newton_wolfe_method, options=newton_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_2_problem, method=tr_newton_cg_method, options=tr_newton_cg_options)
 print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_2_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
 print(f'x: {x}, f: {f}')
@@ -102,20 +112,20 @@ x, f = optSolver(problem=rosen_2_problem, method=dfp_wolfe_method, options=dfp_w
 print(f'x: {x}, f: {f}')
 
 # run rosenbrock-100 with all methods
-x, f = optSolver(problem=rosen_100_problem, method=newton_backtracking_method, options=newton_backtracking_options)
-print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=rosen_100_problem, method=newton_wolfe_method, options=newton_wolfe_options)
-print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=rosen_100_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
-print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=rosen_100_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)
-print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=rosen_100_problem, method=cbfgs_wolfe_method, options=cbfgs_wolfe_options)
-print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=rosen_100_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
-print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=rosen_100_problem, method=dfp_wolfe_method, options=dfp_wolfe_options)
-print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=rosen_100_problem, method=newton_backtracking_method, options=newton_backtracking_options)
+# print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=rosen_100_problem, method=newton_wolfe_method, options=newton_wolfe_options)
+# print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=rosen_100_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
+# print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=rosen_100_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)
+# print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=rosen_100_problem, method=cbfgs_wolfe_method, options=cbfgs_wolfe_options)
+# print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=rosen_100_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
+# print(f'x: {x}, f: {f}')
+# x, f = optSolver(problem=rosen_100_problem, method=dfp_wolfe_method, options=dfp_wolfe_options)
+# print(f'x: {x}, f: {f}')
 
 # TODO: more things to track (with plots hopefully) - num iterations to converge, time to converge, total memory(?)
 # put multiple algos on the same plot when it makes sense to compare for the paper / poster

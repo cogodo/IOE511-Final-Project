@@ -1,5 +1,5 @@
 import numpy as np
-from algorithms.algorithms import gradient_descent, newton, bfgs, dbfgs, cbfgs, lbfgs, dfp
+from algorithms.algorithms import gradient_descent, newton, bfgs, dbfgs, cbfgs, lbfgs, dfp, trnewtoncg
 from algorithms.base import SolverAlgorithm
 from algorithms.utils import VectorCircularBuffer, LBFGSState
 from objectives.base import SolverObjective
@@ -36,19 +36,21 @@ def setMethod(method: SolverAlgorithm):
     # set the step for every iteratiokn
     match method.name:
         case 'GradientDescent':
-            method.step = lambda x, f, g, H, Hinv_approx, H_approx, internal_state, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
         case 'Newton':
-            method.step = lambda x, f, g, H, Hinv_approx, H_approx, internal_state, objective, options: newton(x=x, f=f, g=g, H=H, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: newton(x=x, f=f, g=g, H=H, objective=objective, options=options)
+        case 'TR-Newton-CG':
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: trnewtoncg(x=x, f=f, g=g, H=H, delta=delta, objective=objective, options=options)
         case 'BFGS':
-            method.step = lambda x, f, g, H, Hinv_approx, H_approx, internal_state, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'D-BFGS':
-            method.step = lambda x, f, g, H, Hinv_approx, H_approx, internal_state, objective, options: dbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, H_approx=H_approx, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: dbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, H_approx=H_approx, objective=objective, options=options)
         case 'C-BFGS':
-            method.step = lambda x, f, g, H, Hinv_approx, H_approx, internal_state, objective, options: cbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: cbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'L-BFGS':
-            method.step = lambda x, f, g, H, Hinv_approx, H_approx, internal_state, objective, options: lbfgs(x=x, f=f, g=g, internal_state=internal_state, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: lbfgs(x=x, f=f, g=g, internal_state=internal_state, objective=objective, options=options)
         case 'DFP':
-            method.step = lambda x, f, g, H, Hinv_approx, H_approx, internal_state, objective, options: dfp(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: dfp(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case _:
             raise ValueError("Method name does not exist!")
     return method
@@ -71,6 +73,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     H = problem.hess(x)
     Hinv_approx = np.eye(np.size(H, 0))
     H_approx = Hinv_approx
+    delta = options.trust_region.delta_init
     internal_state = None
     norm_g = np.linalg.norm(g, ord=np.inf)
     norm_g_x0 = norm_g
@@ -94,7 +97,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     while not (norm_g <= options.term_tol*max(norm_g_x0, 1) or k >= options.max_iterations):
 
         # take a step in the method
-        results = method.step(x, f, g, H, Hinv_approx, H_approx, internal_state, problem, options)
+        results = method.step(x, f, g, H, Hinv_approx, H_approx, delta, internal_state, problem, options)
 
         # update function values
         x = results.x_new
@@ -103,6 +106,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
         H = results.H_new
         Hinv_approx = results.Hinv_approx_new
         H_approx = results.H_approx_new
+        delta = results.delta_new
         internal_state = results.internal_state
         norm_g = np.linalg.norm(g, ord=np.inf)
 

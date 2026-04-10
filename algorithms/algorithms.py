@@ -3,7 +3,7 @@ import numpy.typing as npt
 
 Array = npt.NDArray[np.float64]
 
-from algorithms.utils import StepResults, backtracking_line_search, weak_wolfe_line_search, two_loop_recursion, LBFGSState
+from algorithms.utils import StepResults, backtracking_line_search, weak_wolfe_line_search, two_loop_recursion, cg, eval_m_k, LBFGSState
 from objectives.base import SolverObjective
 from options.base import SolverOptions
 
@@ -77,6 +77,32 @@ def newton(x: Array, f: float, g: Array, H: Array, objective: SolverObjective, o
                           alpha=alpha)
 
     return results
+
+def trnewtoncg(x: Array, f: Array, g: Array, H: Array, delta: float, objective: SolverObjective, options: SolverOptions):
+
+    # direction is the solution to the TR subproblem with B_k equal to the exact Hessian
+    d = cg(f=f, g=g, B=H, delta=delta, options=options)
+    rho = (f - objective.value(x + d)) / (eval_m_k(f_k=f, g_k=g, B_k=H, d=np.zeros(np.shape(x))) - eval_m_k(f_k=f, g_k=g, B_k=H, d=d))
+
+    x_new = x
+    delta_new = delta
+
+    if rho > options.trust_region.c1:
+        x_new = x + d
+        if rho > options.trust_region.c2:
+            delta_new = 2 * delta
+    else:
+        delta_new = 0.5 * delta
+
+    results = StepResults(x_new=x_new,
+                          f_new=objective.value(x_new),
+                          g_new=objective.grad(x_new),
+                          H_new=objective.hess(x_new),
+                          delta_new=delta_new,
+                          d=d)
+    
+    return results
+
 
 def trsr1cg(objective: SolverObjective, x: Array, options: SolverOptions):
     pass
