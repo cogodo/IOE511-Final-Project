@@ -162,7 +162,6 @@ def two_loop_recursion(g: Array, Hinv_approx_init: Array, s_buffer: VectorCircul
 def eval_m_k(f_k: Array, g_k: Array, B_k: Array, d: Array):
     return f_k + g_k.transpose() @ d + 0.5 * d.transpose() @ B_k @ d
 
-# TODO: what to return when max iterations is exceeded...right now i'm returning z
 def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
     
     z = np.zeros(shape=(np.size(g, 0), 1))
@@ -174,10 +173,14 @@ def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
     
     j = 0
     while j <= options.cg.max_iterations:
-        
+
         # if solution found suggests negative curvature, go all the way up to the TR boundary
         if p.transpose() @ B @ p <= 0:
-            roots = [np.dot(p, p), np.dot(z, p), np.dot(z, z) - delta ** 2]
+            a = np.dot(p.flatten(), p.flatten())
+            b = np.dot(z.flatten(), p.flatten())
+            c = np.dot(z.flatten(), z.flatten()) - delta**2
+            coeffs = [a, b, c]
+            roots = np.roots(coeffs)
             d_0 = z + roots[0] * p
             d_1 = z + roots[1] * p
 
@@ -191,9 +194,9 @@ def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
         z = z + alpha * p
 
         if np.linalg.norm(z) >= delta:
-            a = (p**2).sum()
+            a = np.dot(p.flatten(), p.flatten())
             b = np.dot(p.flatten(), z_old.flatten())
-            c = (z_old**2).sum() - delta**2
+            c = np.dot(z_old.flatten(), z_old.flatten()) - delta**2
             coeffs = [a, b, c]
             roots = np.roots(coeffs)
             if (roots[0] < 0):
@@ -211,6 +214,8 @@ def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
         p = -r + beta * p
 
         j = j + 1
+
+    # if max iterations has exceeded, return the last iteration of z
     return z
 
 def update_tr(rho: float, x: Array, d: Array, delta: float, options: SolverOptions):

@@ -109,11 +109,11 @@ def trsr1cg(x: Array, f: Array, g: Array, H_approx: Array, delta: float, objecti
     g_new = objective.grad(x_new)
     H_approx_new = H_approx
 
-    # update the Hessian approximation, only if the SR1 tolerance is satisfied
+    # update the Hessian approximation, only if the SR1 tolerance is satisfied and the TR update has not been rejected
     s_k = x_new - x
     y_k = g_new - g
 
-    if np.abs((y_k - H_approx @ s_k).transpose() @ s_k) >= options.bfgs.sr1_tol * np.linalg.norm(y_k - H_approx @ s_k) * np.linalg.norm(s_k):
+    if not np.array_equal(x_new, x) and np.abs((y_k - H_approx @ s_k).transpose() @ s_k) >= options.bfgs.sr1_tol * np.linalg.norm(y_k - H_approx @ s_k) * np.linalg.norm(s_k):
         H_approx_new = H_approx + ((y_k - H_approx @ s_k) @ (y_k - H_approx @ s_k).transpose()) / ((y_k - H_approx @ s_k).transpose() @ s_k)
 
     results = StepResults(x_new=x_new,
