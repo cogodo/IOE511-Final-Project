@@ -76,6 +76,10 @@ lbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe'
 dfp_wolfe_method = SolverAlgorithm(name='DFP')
 dfp_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
 
+# set up Wolfe Damped LBFGS method and options
+damped_lbfgs_wolfe_method = SolverAlgorithm(name='Damped-L-BFGS')
+damped_lbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), max_iterations=max_iters,
+                                    term_tol=epsilon, bfgs=BFGSVariantOptions(history_length=2, sy_tol=epsilon_sy))
 # run quad2 problem with GD
 # x, f = optSolver(problem=quad2_problem, method=GD_const_method, options=GD_const_options)
 # print(f'x: {x}, f: {f}')
@@ -115,6 +119,8 @@ print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_2_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
 print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_2_problem, method=dfp_wolfe_method, options=dfp_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_2_problem, method=damped_lbfgs_wolfe_method, options=damped_lbfgs_wolfe_options)
 print(f'x: {x}, f: {f}')
 
 # run rosenbrock-100 with all methods

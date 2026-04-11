@@ -280,6 +280,59 @@ def lbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: S
 
     return results
 
+
+def damped_lbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: SolverObjective, options: SolverOptions):
+
+    Hinv_approx_init = np.eye(np.size(x, 0))
+    if options.bfgs.Hinv_approx_init is not None:
+        Hinv_approx_init = options.bfgs.Hinv_approx_init
+
+    d = two_loop_recursion(g=g, Hinv_approx_init=Hinv_approx_init, s_buffer=internal_state.s_buffer, y_buffer=internal_state.y_buffer)
+
+    # determine the step size
+    alpha = 0
+    match options.line_search.method:
+        case 'Backtracking':
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case 'Wolfe':
+            alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case _:
+            raise ValueError("Line search method is invalid!")
+
+    x_new = x + alpha * d
+    f_new = objective.value(x_new)
+    g_new = objective.grad(x_new)
+
+    # update the internal state, only if sy tolerance is met
+    s_k = x_new - x
+    y_k = g_new - g
+
+    r_k = -alpha * g
+
+    sy = np.squeeze(s_k.T @ y_k)
+    sr = np.squeeze(s_k.T @ r_k)
+
+    damping_threshold = 0.2 # from Powell, see page 244/21
+    if sy >= damping_threshold * sr:
+        theta = 1.0  # curvature condition already satisfied, no damping needed
+    else:
+        theta = (1-damping_threshold * sr) / (sr - sy)
+
+    y_k = theta * y_k + (1.0 - theta) * r_k
+
+    if s_k.transpose() @ y_k >= options.bfgs.sy_tol * np.linalg.norm(s_k) * np.linalg.norm(y_k):
+        internal_state.s_buffer.append(np.squeeze(s_k))
+        internal_state.y_buffer.append(np.squeeze(y_k))
+
+    results = StepResults(x_new=x_new,
+                          f_new=f_new,
+                          g_new=g_new,
+                          d=d,
+                          alpha=alpha,
+                          internal_state=internal_state)
+
+    return results
+
 def dfp(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjective, options: SolverOptions):
 
     # search direction is the Newton direction, but with the inverse Hessian approximation
