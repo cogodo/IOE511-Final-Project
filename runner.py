@@ -20,13 +20,58 @@ epsilon_sy = 1e-5
 # set up the quad2 problem
 quad2_problem = SolverObjective(name='Quadratic', x0=quad2_data['x_0'], A=quad2_data['A'], b=quad2_data['b'], c=quad2_data['c'])
 
-# set up the rosenbrock-2 problem
-rosen_2_problem = SolverObjective(name='Rosenbrock-2', x0=np.array([[-1.2], [1]]), f_star=0.0)
+# Problem 1: quad_10_10 (n=10, kappa=10)
+np.random.seed(0)
+quad_10_10_x0 = 20 * np.random.normal(size=(10, 1)) - 10
+quad_10_10_problem = SolverObjective(name='quad_10_10', x0=quad_10_10_x0)
 
-# set up the rosenbrock-100 problem
-rosen_100_starting_point = np.ones(shape=(100,1))
-rosen_100_starting_point[0] = -1.2
-rosen_100_problem = SolverObjective(name='Rosenbrock-100', x0=rosen_100_starting_point)
+# Problem 2: quad_10_1000 (n=10, kappa=1000) — same x0 as P1
+np.random.seed(0)
+quad_10_1000_x0 = 20 * np.random.normal(size=(10, 1)) - 10
+quad_10_1000_problem = SolverObjective(name='quad_10_1000', x0=quad_10_1000_x0)
+
+# Problem 3: quad_1000_10 (n=1000, kappa=10)
+np.random.seed(0)
+quad_1000_10_x0 = 20 * np.random.normal(size=(1000, 1)) - 10
+quad_1000_10_problem = SolverObjective(name='quad_1000_10', x0=quad_1000_10_x0)
+
+# Problem 4: quad_1000_1000 (n=1000, kappa=1000) — same x0 as P3
+np.random.seed(0)
+quad_1000_1000_x0 = 20 * np.random.normal(size=(1000, 1)) - 10
+quad_1000_1000_problem = SolverObjective(name='quad_1000_1000', x0=quad_1000_1000_x0)
+
+# Problem 5: quartic_1 (n=4, sigma=1e-4)
+quartic_x0 = np.array([[np.cos(70)], [np.sin(70)], [np.cos(70)], [np.sin(70)]])
+quartic_1_problem = SolverObjective(name='quartic_1', x0=quartic_x0)
+
+# Problem 6: quartic_2 (n=4, sigma=1e4) — same x0 as P5
+quartic_2_problem = SolverObjective(name='quartic_2', x0=quartic_x0.copy())
+
+# Problem 7: Rosenbrock-2 (n=2)
+rosen_2_problem = SolverObjective(name='Rosenbrock-2', x0=np.array([[-1.2], [1.0]]), f_star=0.0)
+
+# Problem 8: Rosenbrock-100 (n=100)
+rosen_100_x0 = np.ones(shape=(100, 1))
+rosen_100_x0[0] = -1.2
+rosen_100_problem = SolverObjective(name='Rosenbrock-100', x0=rosen_100_x0)
+
+# Problem 9: datafit_2 (n=2)
+datafit_2_problem = SolverObjective(name='datafit_2', x0=np.ones((2, 1)))
+
+# Problem 10: exp_10 (n=10)
+exp_10_x0 = np.zeros((10, 1))
+exp_10_x0[0] = 1.0
+exp_10_problem = SolverObjective(name='exp_10', x0=exp_10_x0)
+
+# Problem 11: exp_1000 (n=1000)
+exp_1000_x0 = np.zeros((1000, 1))
+exp_1000_x0[0] = 1.0
+exp_1000_problem = SolverObjective(name='exp_1000', x0=exp_1000_x0)
+
+# Problem 12: genhumps_5 (n=5)
+genhumps_5_x0 = 506.2 * np.ones((5, 1))
+genhumps_5_x0[0] = -506.2
+genhumps_5_problem = SolverObjective(name='genhumps_5', x0=genhumps_5_x0)
 
 # set up constant gradient descent method and options
 GD_const_method = SolverAlgorithm(name="GradientDescent")

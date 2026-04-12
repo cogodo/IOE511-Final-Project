@@ -5,13 +5,55 @@ from algorithms.base import SolverAlgorithm
 from algorithms.utils import VectorCircularBuffer, LBFGSState
 from objectives.base import SolverObjective
 from options.base import SolverOptions
-from objectives.functions import rosen_2_func, rosen_2_grad, rosen_2_Hess,\
-                                rosen_100_func, rosen_100_grad, rosen_100_Hess,\
-                                quadratic_func, quadratic_grad, quadratic_Hess
+from objectives.functions import (
+    quad_10_10_func, quad_10_10_grad, quad_10_10_Hess,
+    quad_10_1000_func, quad_10_1000_grad, quad_10_1000_Hess,
+    quad_1000_10_func, quad_1000_10_grad, quad_1000_10_Hess,
+    quad_1000_1000_func, quad_1000_1000_grad, quad_1000_1000_Hess,
+    quartic_1_func, quartic_1_grad, quartic_1_Hess,
+    quartic_2_func, quartic_2_grad, quartic_2_Hess,
+    rosen_2_func, rosen_2_grad, rosen_2_Hess,
+    rosen_100_func, rosen_100_grad, rosen_100_Hess,
+    datafit_2_func, datafit_2_grad, datafit_2_Hess,
+    exp_10_func, exp_10_grad, exp_10_Hess,
+    exp_1000_func, exp_1000_grad, exp_1000_Hess,
+    genhumps_5_func, genhumps_5_grad, genhumps_5_Hess,
+    quadratic_func, quadratic_grad, quadratic_Hess,
+)
 
 def setProblem(problem: SolverObjective):
     
     match problem.name:
+        case 'quad_10_10':
+            problem.value = quad_10_10_func
+            problem.grad = quad_10_10_grad
+            problem.hess = quad_10_10_Hess
+
+        case 'quad_10_1000':
+            problem.value = quad_10_1000_func
+            problem.grad = quad_10_1000_grad
+            problem.hess = quad_10_1000_Hess
+
+        case 'quad_1000_10':
+            problem.value = quad_1000_10_func
+            problem.grad = quad_1000_10_grad
+            problem.hess = quad_1000_10_Hess
+
+        case 'quad_1000_1000':
+            problem.value = quad_1000_1000_func
+            problem.grad = quad_1000_1000_grad
+            problem.hess = quad_1000_1000_Hess
+
+        case 'quartic_1':
+            problem.value = quartic_1_func
+            problem.grad = quartic_1_grad
+            problem.hess = quartic_1_Hess
+
+        case 'quartic_2':
+            problem.value = quartic_2_func
+            problem.grad = quartic_2_grad
+            problem.hess = quartic_2_Hess
+
         case 'Rosenbrock-2':
             problem.value = rosen_2_func
             problem.grad = rosen_2_grad
@@ -21,6 +63,26 @@ def setProblem(problem: SolverObjective):
             problem.value = rosen_100_func
             problem.grad = rosen_100_grad
             problem.hess = rosen_100_Hess
+
+        case 'datafit_2':
+            problem.value = datafit_2_func
+            problem.grad = datafit_2_grad
+            problem.hess = datafit_2_Hess
+
+        case 'exp_10':
+            problem.value = exp_10_func
+            problem.grad = exp_10_grad
+            problem.hess = exp_10_Hess
+
+        case 'exp_1000':
+            problem.value = exp_1000_func
+            problem.grad = exp_1000_grad
+            problem.hess = exp_1000_Hess
+
+        case 'genhumps_5':
+            problem.value = genhumps_5_func
+            problem.grad = genhumps_5_grad
+            problem.hess = genhumps_5_Hess
 
         case 'Quadratic':
             problem.value = lambda x: quadratic_func(A=problem.A, b=problem.b, c=problem.c, x=x)
