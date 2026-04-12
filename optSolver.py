@@ -1,6 +1,6 @@
 import numpy as np
 from algorithms.algorithms import gradient_descent, newton, bfgs, dbfgs, cbfgs, lbfgs, dfp, trnewtoncg, trsr1cg, \
-    damped_lbfgs
+    dlbfgs
 from algorithms.base import SolverAlgorithm
 from algorithms.utils import VectorCircularBuffer, LBFGSState
 from objectives.base import SolverObjective
@@ -47,15 +47,15 @@ def setMethod(method: SolverAlgorithm):
         case 'BFGS':
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'D-BFGS':
-            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: dbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, H_approx=H_approx, objective=objective, options=options)
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: dbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'C-BFGS':
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: cbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'L-BFGS':
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: lbfgs(x=x, f=f, g=g, internal_state=internal_state, objective=objective, options=options)
         case 'DFP':
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: dfp(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
-        case 'Damped-L-BFGS':
-            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: damped_lbfgs(x=x, f=f, g=g, internal_state=internal_state, objective=objective, options=options)
+        case 'D-L-BFGS':
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: dlbfgs(x=x, f=f, g=g, internal_state=internal_state, objective=objective, options=options)
         case _:
             raise ValueError("Method name does not exist!")
     return method
@@ -91,7 +91,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
         H_approx = options.bfgs.H_approx_init
 
     # set up internal state and initial Hessian approximation for each iteration
-    if method.name == 'L-BFGS' or method.name == 'Damped-L-BFGS':
+    if method.name == 'L-BFGS' or method.name == 'D-L-BFGS':
         internal_state = LBFGSState(s_buffer=VectorCircularBuffer(capacity=options.bfgs.history_length, vector_size=x.size, dtype=x.dtype),
                                     y_buffer=VectorCircularBuffer(capacity=options.bfgs.history_length, vector_size=x.size, dtype=x.dtype))
 

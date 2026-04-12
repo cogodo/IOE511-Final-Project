@@ -162,7 +162,7 @@ def bfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObje
     
     return results
 
-def dbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, H_approx: Array, objective: SolverObjective, options: SolverOptions):
+def dbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjective, options: SolverOptions):
 
     # search direction is the Newton direction, but with the inverse Hessian approximation
     d = -Hinv_approx @ g
@@ -186,20 +186,18 @@ def dbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, H_approx: Array, obj
 
     # instead of skipping the update when the sy tolerance is not met, we will set theta to interpolate current inverse Hessian approximation and the one produced by the BFGS formula
     theta_k = 1
-    if (s_k.transpose() @ y_k < 0.2*s_k.transpose() @ H_approx @ s_k):
-        theta_k = (0.8*s_k.transpose() @ H_approx @ s_k) / (s_k.transpose() @ H_approx @ s_k - s_k.transpose() @ y_k)
+    if (s_k.transpose() @ y_k < 0.2*y_k.transpose() @ Hinv_approx @ y_k):
+        theta_k = (0.8*y_k.transpose() @ Hinv_approx @ y_k) / (y_k.transpose() @ Hinv_approx @ y_k - s_k.transpose() @ y_k)
 
-    r_k = theta_k * y_k + (1 - theta_k) * H_approx @ s_k
+    s_mod_k = theta_k * s_k + (1 - theta_k) * Hinv_approx @ y_k
 
-    # update using BFGS formulas: choice of theta ensures positive definite-ness of update
-    H_approx_new = H_approx - (H_approx @ s_k @ s_k.transpose() @ H_approx) / (s_k.transpose() @ H_approx @ s_k) + (r_k @ r_k.transpose()) / (s_k.transpose() @ r_k)
-    Hinv_approx_new = (np.eye(np.size(Hinv_approx, 0)) - (s_k @ r_k.transpose()) / (s_k.transpose() @ r_k)) @ Hinv_approx @ (np.eye(np.size(Hinv_approx, 0)) - (r_k @ s_k.transpose()) / (s_k.transpose() @ r_k)) + (s_k @ s_k.transpose()) / (s_k.transpose() @ r_k)
-
+    # update using BFGS formula, replacing s_k with s_mod_k: choice of theta ensures positive definite-ness of update
+    Hinv_approx_new = (np.eye(np.size(Hinv_approx, 0)) - (s_mod_k @ y_k.transpose()) / (s_mod_k.transpose() @ y_k)) @ Hinv_approx @ (np.eye(np.size(Hinv_approx, 0)) - (y_k @ s_mod_k.transpose()) / (s_mod_k.transpose() @ y_k)) + (s_mod_k @ s_mod_k.transpose()) / (s_mod_k.transpose() @ y_k)
+    
     results = StepResults(x_new=x_new,
                           f_new=f_new,
                           g_new=g_new,
                           Hinv_approx_new=Hinv_approx_new,
-                          H_approx_new=H_approx_new,
                           d=d,
                           alpha=alpha)
     
@@ -280,8 +278,11 @@ def lbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: S
 
     return results
 
+def ddbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjective, options: SolverOptions):
+    pass
 
-def damped_lbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: SolverObjective, options: SolverOptions):
+
+def dlbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: SolverObjective, options: SolverOptions):
 
     Hinv_approx_init = np.eye(np.size(x, 0))
     if options.bfgs.Hinv_approx_init is not None:
