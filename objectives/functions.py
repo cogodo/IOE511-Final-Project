@@ -42,7 +42,7 @@ def quad_10_10_func(x):
 
 def quad_10_10_grad(x):
     # set raondom seed
-    np.random.seed(12)
+    np.random.seed(0)
     # Generate random data
     q = np.random.normal(size=(10,1))
     mat = scipy.io.loadmat('data/quad_10_10_Q.mat')
@@ -53,7 +53,7 @@ def quad_10_10_grad(x):
 
 def quad_10_10_Hess(x):
     # set raondom seed
-    np.random.seed(12)
+    np.random.seed(0)
     # Generate random data
     q = np.random.normal(size=(10,1))
     mat = scipy.io.loadmat('data/quad_10_10_Q.mat')
@@ -84,6 +84,11 @@ def quad_10_1000_func(x):
     # compute function value
     return (1/2*x.T@Q@x + q.T@x)[0]
 
+def quad_10_1000_grad(x):
+    raise NotImplementedError
+
+def quad_10_1000_Hess(x):
+    raise NotImplementedError
 
 # Problem Number: 3
 # Problem Name: quad_1000_10
@@ -106,6 +111,12 @@ def quad_1000_10_func(x):
     # compute function value
     return (1/2*x.T@Q@x + q.T@x)[0]
 
+def quad_1000_10_grad(x):
+    raise NotImplementedError
+
+def quad_1000_10_Hess(x):
+    raise NotImplementedError
+
 # Problem Number: 4
 # Problem Name: quad_1000_1000
 # Problem Description: A randomly generated convex quadratic function; the 
@@ -127,7 +138,11 @@ def quad_1000_1000_func(x):
     # compute function value
     return (1/2*x.T@Q@x + q.T@x)[0]
 
+def quad_1000_1000_grad(x):
+    raise NotImplementedError
 
+def quad_1000_1000_Hess(x):
+    raise NotImplementedError
 
 
 # Problem Number: 5
@@ -146,6 +161,12 @@ def quartic_1_func(x):
     
     return 1/2*(x.T @x) + sigma/4*(x.T@Q@x)**2
 
+def quartic_1_grad(x):
+    raise NotImplementedError
+
+def quartic_1_Hess(x):
+    raise NotImplementedError
+
 # Problem Number: 6
 # Problem Name: quartic_2
 # Problem Description: A quartic function. Dimension n = 4
@@ -161,6 +182,12 @@ def quartic_2_func(x):
     sigma = 1e4
     
     return 1/2*(x.T@x) + sigma/4*(x.T@Q@x)**2
+
+def quartic_2_grad(x):
+    raise NotImplementedError
+
+def quartic_2_Hess(x):
+    raise NotImplementedError
 
 # Problem Number: 7
 # Problem Name: Rosenbrock_2
@@ -233,6 +260,23 @@ def rosen_100_Hess(x: Array):
 
     return H
 
+# Problem Number: 9
+# Problem Name: DataFit_2
+# Problem Description: 3 dim 
+
+
+
+# Problem Number: 10
+# Problem Name: Exponential_10
+# Problem Description: 
+
+
+
+# Problem Number: 11
+# Problem Name: Exponential_1000
+# Problem Description: 
+
+
 
 # Problem Number: 12
 # Problem Name: genhumps_5
@@ -240,8 +284,6 @@ def rosen_100_Hess(x: Array):
 #                      This problem is from the well-known CUTEr test set.
 
 # function that computes the function value of the genhumps_5 function
-
-
 
 def genhumps_5_func(x):
     f = 0
