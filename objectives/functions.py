@@ -416,7 +416,6 @@ def genhumps_5_func(x: Array) -> float:
 # function that computes the gradient of the genhumps_5 function
 
 def genhumps_5_grad(x: Array) -> Array:
-    x = rearrange(x, '... -> (...)')
     g = np.zeros((5, 1))
     g[0] = 4*np.sin(2*x[0])*np.cos(2*x[0]) * np.sin(2*x[1])**2 + 0.1*x[0]
     g[1] = 4*np.sin(2*x[1])*np.cos(2*x[1]) * (np.sin(2*x[0])**2 + np.sin(2*x[2])**2) + 0.2*x[1]

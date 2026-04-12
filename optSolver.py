@@ -18,7 +18,6 @@ from objectives.functions import (
     exp_10_func, exp_10_grad, exp_10_Hess,
     exp_1000_func, exp_1000_grad, exp_1000_Hess,
     genhumps_5_func, genhumps_5_grad, genhumps_5_Hess,
-    quadratic_func, quadratic_grad, quadratic_Hess,
 )
 
 def setProblem(problem: SolverObjective):
@@ -83,11 +82,6 @@ def setProblem(problem: SolverObjective):
             problem.value = genhumps_5_func
             problem.grad = genhumps_5_grad
             problem.hess = genhumps_5_Hess
-
-        case 'Quadratic':
-            problem.value = lambda x: quadratic_func(A=problem.A, b=problem.b, c=problem.c, x=x)
-            problem.grad = lambda x: quadratic_grad(A=problem.A, b=problem.b, x=x)
-            problem.hess = lambda x: quadratic_Hess(A=problem.A)
 
         case _:
             raise ValueError("Problem name does not exist!")
