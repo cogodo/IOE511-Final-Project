@@ -1,304 +1,224 @@
-import numpy as np
-import scipy.io as sio
-from objectives.base import SolverObjective
-from algorithms.base import SolverAlgorithm
-from options.base import SolverOptions, LineSearchOptions, CGOptions, TrustRegionOptions, BFGSVariantOptions
-from optSolver import optSolver
+"""
+Runner for ad-hoc experiments and convergence plots.
+
+Usage:
+    python runner.py                        # runs default experiment
+    python runner.py Rosenbrock-2           # plots all methods on a specific problem
+    python runner.py quad_10_10 BFGS_Wolfe  # runs a single (problem, method) pair
+"""
+
+import copy
+import sys
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-quad2_data = sio.loadmat('objectives/data/quadratic2.mat')
-quad10_data = sio.loadmat('objectives/data/quadratic10.mat')
-
-# constants
-alpha_bar = 1.0
-c1 = 1e-3
-tau = 0.5
-max_iters = 1000
-epsilon = 1e-5
-epsilon_sy = 1e-5
-
-# set up the quad2 problem
-quad2_problem = SolverObjective(name='Quadratic', x0=quad2_data['x_0'], A=quad2_data['A'], b=quad2_data['b'], c=quad2_data['c'])
-
-# Problem 1: quad_10_10 (n=10, kappa=10)
-np.random.seed(0)
-quad_10_10_x0 = 20 * np.random.normal(size=(10, 1)) - 10
-quad_10_10_problem = SolverObjective(name='quad_10_10', x0=quad_10_10_x0)
-
-# Problem 2: quad_10_1000 (n=10, kappa=1000) — same x0 as P1
-np.random.seed(0)
-quad_10_1000_x0 = 20 * np.random.normal(size=(10, 1)) - 10
-quad_10_1000_problem = SolverObjective(name='quad_10_1000', x0=quad_10_1000_x0)
-
-# Problem 3: quad_1000_10 (n=1000, kappa=10)
-np.random.seed(0)
-quad_1000_10_x0 = 20 * np.random.normal(size=(1000, 1)) - 10
-quad_1000_10_problem = SolverObjective(name='quad_1000_10', x0=quad_1000_10_x0)
-
-# Problem 4: quad_1000_1000 (n=1000, kappa=1000) — same x0 as P3
-np.random.seed(0)
-quad_1000_1000_x0 = 20 * np.random.normal(size=(1000, 1)) - 10
-quad_1000_1000_problem = SolverObjective(name='quad_1000_1000', x0=quad_1000_1000_x0)
-
-# Problem 5: quartic_1 (n=4, sigma=1e-4)
-quartic_x0 = np.array([[np.cos(70)], [np.sin(70)], [np.cos(70)], [np.sin(70)]])
-quartic_1_problem = SolverObjective(name='quartic_1', x0=quartic_x0)
-
-# Problem 6: quartic_2 (n=4, sigma=1e4) — same x0 as P5
-quartic_2_problem = SolverObjective(name='quartic_2', x0=quartic_x0.copy())
-
-# Problem 7: Rosenbrock-2 (n=2)
-rosen_2_problem = SolverObjective(name='Rosenbrock-2', x0=np.array([[-1.2], [1.0]]), f_star=0.0)
-
-# Problem 8: Rosenbrock-100 (n=100)
-rosen_100_x0 = np.ones(shape=(100, 1))
-rosen_100_x0[0] = -1.2
-rosen_100_problem = SolverObjective(name='Rosenbrock-100', x0=rosen_100_x0)
-
-# Problem 9: datafit_2 (n=2)
-datafit_2_problem = SolverObjective(name='datafit_2', x0=np.ones((2, 1)))
-
-# Problem 10: exp_10 (n=10)
-exp_10_x0 = np.zeros((10, 1))
-exp_10_x0[0] = 1.0
-exp_10_problem = SolverObjective(name='exp_10', x0=exp_10_x0)
-
-# Problem 11: exp_1000 (n=1000)
-exp_1000_x0 = np.zeros((1000, 1))
-exp_1000_x0[0] = 1.0
-exp_1000_problem = SolverObjective(name='exp_1000', x0=exp_1000_x0)
-
-# Problem 12: genhumps_5 (n=5)
-genhumps_5_x0 = 506.2 * np.ones((5, 1))
-genhumps_5_x0[0] = -506.2
-genhumps_5_problem = SolverObjective(name='genhumps_5', x0=genhumps_5_x0)
-
-# set up constant gradient descent method and options
-GD_const_method = SolverAlgorithm(name="GradientDescent")
-GD_const_options = SolverOptions(line_search=LineSearchOptions(method='Constant', const_alpha=1e-3), max_iterations=max_iters, term_tol=epsilon)
-
-# set up backtracking gradient descent method and options
-GD_backtracking_method = SolverAlgorithm(name='GradientDescent')
-GD_backtracking_options = SolverOptions(line_search=LineSearchOptions(method='Backtracking', alpha0=alpha_bar, c1=c1, tau=tau), max_iterations=max_iters, term_tol=epsilon)
-
-# set up Wolfe gradient descent method and options
-GD_wolfe_method = SolverAlgorithm(name='GradientDescent')
-GD_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe'), max_iterations=max_iters, term_tol=epsilon)
-
-# set up the backtracking newton method and options
-newton_backtracking_method = SolverAlgorithm(name='Newton')
-newton_backtracking_options = SolverOptions(line_search=LineSearchOptions(method='Backtracking', alpha0=alpha_bar, c1=c1, tau=tau), max_iterations=max_iters, term_tol=epsilon)
-
-# set up Wolfe newton method and options
-newton_wolfe_method = SolverAlgorithm(name='Newton')
-newton_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe'), max_iterations=max_iters, term_tol=epsilon)
-
-# set up TR Newton method with CG subproblem solver
-tr_newton_cg_method = SolverAlgorithm(name='TR-Newton-CG')
-tr_newton_cg_options = SolverOptions()
-
-# set up TR SR1 method with CG subproblem solver
-tr_sr1_cg_method = SolverAlgorithm(name='TR-SR1-CG')
-tr_sr1_cg_options = SolverOptions()
-
-# set up backtracking BFGS method and options
-bfgs_back_method = SolverAlgorithm(name='BFGS')
-bfgs_back_options = SolverOptions(line_search=LineSearchOptions(method='Backtracking', alpha0=alpha_bar, c1=c1, tau=tau), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
-
-# set up Wolfe BFGS method and options
-bfgs_wolfe_method = SolverAlgorithm(name='BFGS')
-bfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
-
-# set up Wolfe DBFGS method and options
-dbfgs_wolfe_method = SolverAlgorithm(name='D-BFGS')
-dbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
-
-# set up Wolfe DDBFGS method and options
-ddbfgs_wolfe_method = SolverAlgorithm(name='DD-BFGS')
-ddbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
-
-# set up Wolfe CBFGS method and options
-cbfgs_wolfe_method = SolverAlgorithm(name='C-BFGS')
-cbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
-
-# set up Wolfe LBFGS method and options
-lbfgs_wolfe_method = SolverAlgorithm(name='L-BFGS')
-lbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), max_iterations=max_iters,
-                                    term_tol=epsilon, bfgs=BFGSVariantOptions(history_length=2, sy_tol=epsilon_sy))
-
-# set up backtracking DFP method and options
-dfp_back_method = SolverAlgorithm(name='DFP')
-dfp_back_options = SolverOptions(line_search=LineSearchOptions(method='Backtracking', alpha0=alpha_bar, c1=c1, tau=tau), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
-
-# set up Wolfe DFP method and options
-dfp_wolfe_method = SolverAlgorithm(name='DFP')
-dfp_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
-
-# set up Wolfe Damped LBFGS method and options
-dlbfgs_wolfe_method = SolverAlgorithm(name='D-L-BFGS')
-dlbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), max_iterations=max_iters,
-                                    term_tol=epsilon, bfgs=BFGSVariantOptions(history_length=2, sy_tol=epsilon_sy))
-# run quad2 problem with GD
-# x, f = optSolver(problem=quad2_problem, method=GD_const_method, options=GD_const_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=quad2_problem, method=GD_backtracking_method, options=GD_backtracking_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=quad2_problem, method=GD_wolfe_method, options=GD_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# # # run rosenbrock with GD
-# x, f = optSolver(problem=rosen_problem, method=GD_backtracking_method, options=GD_backtracking_options)
-# print(f'x: {x}, f: {f}')
-
-# run quad2 problem with Newton
-# x, f = optSolver(problem=quad2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=quad2_problem, method=newton_wolfe_method, options=newton_wolfe_options)
-# print(f'x: {x}, f: {f}')
-
-# run rosenbrock-2 with all methods
-# x, f = optSolver(problem=rosen_2_problem, method=GD_backtracking_method, options=GD_backtracking_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=GD_wolfe_method, options=GD_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=newton_backtracking_method, options=newton_backtracking_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=newton_wolfe_method, options=newton_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=tr_newton_cg_method, options=tr_newton_cg_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=tr_sr1_cg_method, options=tr_newton_cg_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
-# print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=rosen_2_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)
-print(f'x: {x}, f: {f}')
-x, f = optSolver(problem=rosen_2_problem, method=ddbfgs_wolfe_method, options=ddbfgs_wolfe_options)
-print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=cbfgs_wolfe_method, options=cbfgs_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=dfp_wolfe_method, options=dfp_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_2_problem, method=dlbfgs_wolfe_method, options=dlbfgs_wolfe_options)
-# print(f'x: {x}, f: {f}')
-
-# run rosenbrock-100 with all methods
-# x, f = optSolver(problem=rosen_100_problem, method=newton_backtracking_method, options=newton_backtracking_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_100_problem, method=newton_wolfe_method, options=newton_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_100_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_100_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_100_problem, method=cbfgs_wolfe_method, options=cbfgs_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_100_problem, method=lbfgs_wolfe_method, options=lbfgs_wolfe_options)
-# print(f'x: {x}, f: {f}')
-# x, f = optSolver(problem=rosen_100_problem, method=dfp_wolfe_method, options=dfp_wolfe_options)
-# print(f'x: {x}, f: {f}')
-
-# TODO: more things to track (with plots hopefully) - num iterations to converge, time to converge, total memory(?)
-# put multiple algos on the same plot when it makes sense to compare for the paper / poster
-# for individual runs, we probably want 2 loss plots (I think): One in terms of iterations, and one in terms of time
-# or if the time one doesnt turn out we could just output the total time taken at the end too.
-
-method_options = {
-    'GradientDescent_Constant': GD_const_options,
-    'GradientDescent_Backtracking': GD_backtracking_options,
-    'GradientDescent_Wolfe': GD_wolfe_options,
-    'Newton_Backtracking': newton_backtracking_options,
-    'Newton_Wolfe': newton_wolfe_options,
-    'BFGS_Backtracking': bfgs_back_options,
-    'BFGS_Wolfe': bfgs_wolfe_options,
-    'TR-Newton-CG': tr_newton_cg_options,
-    'TR-SR1-CG': tr_sr1_cg_options,
-    'DFP_Backtracking': dfp_back_options,
-    'DFP_Wolfe': dfp_wolfe_options
-}
-
-def plot_iterations_v_f_residual_all_canon_methods(problem: SolverObjective, title: str, method_options: dict[str, SolverOptions]):
-    
-    gd_const_f_vals = []
-    gd_back_f_vals = []
-    gd_wolfe_f_vals = []
-    newton_back_f_vals = []
-    newton_wolfe_f_vals = []
-    tr_newton_cg_f_vals = []
-    tr_sr1_cg_f_vals = []
-    bfgs_back_f_vals = []
-    bfgs_wolfe_f_vals = []
-    dfp_back_f_vals = []
-    dfp_wolfe_f_vals = []
-
-    # gradient descent
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('GradientDescent'), options=method_options['GradientDescent_Constant'], f_vals=gd_const_f_vals)
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('GradientDescent'), options=method_options['GradientDescent_Backtracking'], f_vals=gd_back_f_vals)
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('GradientDescent'), options=method_options['GradientDescent_Wolfe'], f_vals=gd_wolfe_f_vals)
-
-    # newton
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('Newton'), options=method_options['Newton_Backtracking'], f_vals=newton_back_f_vals)
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('Newton'), options=method_options['Newton_Backtracking'], f_vals=newton_wolfe_f_vals)
-
-    # trust region
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('TR-Newton-CG'), options=method_options['TR-Newton-CG'], f_vals=tr_newton_cg_f_vals)
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('TR-SR1-CG'), options=method_options['TR-SR1-CG'], f_vals=tr_sr1_cg_f_vals)
-
-    # # BFGS
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('BFGS'), options=method_options['BFGS_Backtracking'], f_vals=bfgs_back_f_vals)
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('BFGS'), options=method_options['BFGS_Wolfe'], f_vals=bfgs_wolfe_f_vals)
-
-    # # DFP
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('DFP'), options=method_options['DFP_Backtracking'], f_vals=dfp_back_f_vals)
-    _, _ = optSolver(problem=problem, method=SolverAlgorithm('DFP'), options=method_options['DFP_Wolfe'], f_vals=dfp_wolfe_f_vals)
-    
-    blues = plt.get_cmap('Blues')
-    blue_shades = [blues(0.4), blues(0.7), blues(1.0)] 
-
-    greens = plt.get_cmap('Greens')
-    green_shades = [greens(0.4), greens(0.8)]
-
-    oranges = plt.get_cmap('Oranges')
-    orange_shades = [oranges(0.4), oranges(0.7)]
-
-    reds = plt.get_cmap('RdPu')
-    red_shades = [reds(0.4), reds(0.8)]
-
-    purples = plt.get_cmap('Purples')
-    purple_shades = [purples(0.4), purples(0.8)]
-
-    plt.plot(np.array(gd_const_f_vals) - problem.f_star, color=blue_shades[0], label='GD (constant step size)')
-    plt.plot(np.array(gd_back_f_vals) - problem.f_star, color=blue_shades[1], label='GD (backtracking)')
-    plt.plot(np.array(gd_wolfe_f_vals) - problem.f_star, color=blue_shades[2], label='GD (Wolfe)')
-    plt.plot(np.array(newton_back_f_vals) - problem.f_star, color=green_shades[0], label='Newton (backtracking)')
-    plt.plot(np.array(newton_wolfe_f_vals) - problem.f_star, color=green_shades[1], label='Newton (Wolfe)')
-    plt.plot(np.array(tr_newton_cg_f_vals) - problem.f_star, color=orange_shades[0], label='TR (Newton)')
-    plt.plot(np.array(tr_sr1_cg_f_vals) - problem.f_star, color=orange_shades[1], label='TR (SR1)')
-    plt.plot(np.array(bfgs_back_f_vals) - problem.f_star, color=red_shades[0], label='BFGS (backtracking)')
-    plt.plot(np.array(bfgs_wolfe_f_vals) - problem.f_star, color=red_shades[1], label='BFGS (Wolfe)')
-    plt.plot(np.array(dfp_back_f_vals) - problem.f_star, color=purple_shades[0], label='DFP (backtracking)')
-    plt.plot(np.array(dfp_wolfe_f_vals) - problem.f_star, color=purple_shades[1], label='DFP (Wolfe)')
-
-    plt.yscale('log')
-    plt.xlabel('iterations k')
-    plt.ylabel('f - f*')
-
-    plt.title(title)
-    plt.legend(bbox_to_anchor=(0.5, -0.15), loc='upper center', ncol=4, fontsize=6)
-    plt.tight_layout()
-    plt.savefig(f'plots/{title}.png')
-
-plot_iterations_v_f_residual_all_canon_methods(problem=rosen_2_problem, title='test', method_options=method_options)
-    
-    
+from algorithms.base import SolverAlgorithm
+from objectives.base import SolverObjective
+from optSolver import optSolver
+from options.base import (
+    BFGSVariantOptions,
+    LineSearchOptions,
+    SolverOptions,
+)
 
 
+# ---------------------------------------------------------------------------
+# Problem catalogue
+# ---------------------------------------------------------------------------
+def build_problems() -> dict[str, SolverObjective]:
+    np.random.seed(0)
+    q10 = 20 * np.random.normal(size=(10, 1)) - 10
+    np.random.seed(0)
+    q1000 = 20 * np.random.normal(size=(1000, 1)) - 10
+
+    quartic_x0 = np.array([[np.cos(70)], [np.sin(70)], [np.cos(70)], [np.sin(70)]])
+
+    rosen_100_x0 = np.ones((100, 1))
+    rosen_100_x0[0] = -1.2
+
+    exp_10_x0 = np.zeros((10, 1))
+    exp_10_x0[0] = 1.0
+
+    exp_1000_x0 = np.zeros((1000, 1))
+    exp_1000_x0[0] = 1.0
+
+    genhumps_5_x0 = 506.2 * np.ones((5, 1))
+    genhumps_5_x0[0] = -506.2
+
+    return {
+        "quad_10_10":      SolverObjective(name="quad_10_10",      x0=q10.copy(),           f_star=None),
+        "quad_10_1000":    SolverObjective(name="quad_10_1000",    x0=q10.copy(),           f_star=None),
+        "quad_1000_10":    SolverObjective(name="quad_1000_10",    x0=q1000.copy(),         f_star=None),
+        "quad_1000_1000":  SolverObjective(name="quad_1000_1000",  x0=q1000.copy(),         f_star=None),
+        "quartic_1":       SolverObjective(name="quartic_1",       x0=quartic_x0.copy(),    f_star=0.0),
+        "quartic_2":       SolverObjective(name="quartic_2",       x0=quartic_x0.copy(),    f_star=0.0),
+        "Rosenbrock-2":    SolverObjective(name="Rosenbrock-2",    x0=np.array([[-1.2], [1.0]]), f_star=0.0),
+        "Rosenbrock-100":  SolverObjective(name="Rosenbrock-100",  x0=rosen_100_x0,         f_star=0.0),
+        "datafit_2":       SolverObjective(name="datafit_2",       x0=np.ones((2, 1)),      f_star=None),
+        "exp_10":          SolverObjective(name="exp_10",          x0=exp_10_x0,            f_star=None),
+        "exp_1000":        SolverObjective(name="exp_1000",        x0=exp_1000_x0,          f_star=None),
+        "genhumps_5":      SolverObjective(name="genhumps_5",      x0=genhumps_5_x0,        f_star=0.0),
+    }
 
 
+# ---------------------------------------------------------------------------
+# Method catalogue  (label -> (algorithm_name, SolverOptions))
+# ---------------------------------------------------------------------------
+BACKTRACKING = LineSearchOptions(method="Backtracking")
+WOLFE = LineSearchOptions(method="Wolfe")
+CONSTANT = LineSearchOptions(method="Constant")
 
 
+def build_methods() -> dict[str, tuple[str, SolverOptions]]:
+    return {
+        "GD_Constant":        ("GradientDescent", SolverOptions(line_search=CONSTANT)),
+        "GD_Backtracking":    ("GradientDescent", SolverOptions(line_search=BACKTRACKING)),
+        "GD_Wolfe":           ("GradientDescent", SolverOptions(line_search=WOLFE)),
+        "Newton_Backtracking":("Newton",          SolverOptions(line_search=BACKTRACKING)),
+        "Newton_Wolfe":       ("Newton",          SolverOptions(line_search=WOLFE)),
+        "TR-Newton-CG":       ("TR-Newton-CG",    SolverOptions()),
+        "TR-SR1-CG":          ("TR-SR1-CG",       SolverOptions()),
+        "BFGS_Backtracking":  ("BFGS",            SolverOptions(line_search=BACKTRACKING)),
+        "BFGS_Wolfe":         ("BFGS",            SolverOptions(line_search=WOLFE)),
+        "D-BFGS_Wolfe":       ("D-BFGS",          SolverOptions(line_search=WOLFE)),
+        "DD-BFGS_Wolfe":      ("DD-BFGS",         SolverOptions(line_search=WOLFE)),
+        "C-BFGS_Wolfe":       ("C-BFGS",          SolverOptions(line_search=WOLFE)),
+        "L-BFGS_Wolfe":       ("L-BFGS",          SolverOptions(line_search=WOLFE)),
+        "D-L-BFGS_Wolfe":     ("D-L-BFGS",        SolverOptions(line_search=WOLFE)),
+        "DFP_Backtracking":   ("DFP",             SolverOptions(line_search=BACKTRACKING)),
+        "DFP_Wolfe":          ("DFP",             SolverOptions(line_search=WOLFE)),
+    }
 
 
+# ---------------------------------------------------------------------------
+# Color palette grouped by algorithm family
+# ---------------------------------------------------------------------------
+FAMILY_CMAPS: list[tuple[str, list[str]]] = [
+    ("Blues",   ["GD_Constant", "GD_Backtracking", "GD_Wolfe"]),
+    ("Greens",  ["Newton_Backtracking", "Newton_Wolfe"]),
+    ("Oranges", ["TR-Newton-CG", "TR-SR1-CG"]),
+    ("RdPu",    ["BFGS_Backtracking", "BFGS_Wolfe"]),
+    ("YlOrBr",  ["D-BFGS_Wolfe", "DD-BFGS_Wolfe", "C-BFGS_Wolfe"]),
+    ("PuBu",    ["L-BFGS_Wolfe", "D-L-BFGS_Wolfe"]),
+    ("Purples", ["DFP_Backtracking", "DFP_Wolfe"]),
+]
 
 
+def _build_color_map() -> dict[str, tuple]:
+    colors: dict[str, tuple] = {}
+    for cmap_name, labels in FAMILY_CMAPS:
+        cmap = plt.get_cmap(cmap_name)
+        n = len(labels)
+        for i, label in enumerate(labels):
+            colors[label] = cmap(0.4 + 0.6 * i / max(n - 1, 1))
+    return colors
+
+
+# ---------------------------------------------------------------------------
+# Convergence plot: f - f* vs iterations for one problem, all methods
+# ---------------------------------------------------------------------------
+def plot_convergence(
+    problem: SolverObjective,
+    methods: dict[str, tuple[str, SolverOptions]],
+    title: str | None = None,
+    save_dir: str = "plots",
+) -> None:
+    if problem.f_star is None:
+        print(f"Skipping plot for {problem.name}: f_star not set")
+        return
+
+    colors = _build_color_map()
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for label, (algo_name, opts) in methods.items():
+        prob = copy.deepcopy(problem)
+        f_vals: list[float] = []
+        try:
+            optSolver(prob, SolverAlgorithm(algo_name), opts, f_vals=f_vals)
+        except Exception as exc:
+            print(f"  {label}: ERROR -- {exc}")
+            continue
+
+        if not f_vals:
+            continue
+
+        residuals = np.array(f_vals) - problem.f_star
+        residuals = np.maximum(residuals, 1e-16)
+        ax.plot(residuals, color=colors.get(label), label=label)
+
+    ax.set_yscale("log")
+    ax.set_xlabel("Iteration k")
+    ax.set_ylabel("f(x_k) - f*")
+    ax.set_title(title or problem.name)
+    ax.legend(bbox_to_anchor=(0.5, -0.18), loc="upper center", ncol=4, fontsize=7)
+    fig.tight_layout()
+
+    out = Path(save_dir)
+    out.mkdir(exist_ok=True)
+    fname = out / f"{title or problem.name}.png"
+    fig.savefig(fname, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved: {fname}")
+
+
+# ---------------------------------------------------------------------------
+# Single run helper
+# ---------------------------------------------------------------------------
+def run_single(
+    problem: SolverObjective,
+    algo_name: str,
+    options: SolverOptions,
+) -> None:
+    prob = copy.deepcopy(problem)
+    x, f = optSolver(prob, SolverAlgorithm(algo_name), options)
+    print(f"  x = {x.flatten()}")
+    print(f"  f = {f}")
+
+
+# ---------------------------------------------------------------------------
+# CLI entrypoint
+# ---------------------------------------------------------------------------
+def main() -> None:
+    problems = build_problems()
+    methods = build_methods()
+
+    args = sys.argv[1:]
+
+    if len(args) == 0:
+        prob = problems["Rosenbrock-2"]
+        print(f"Running convergence plot for {prob.name} with all methods...")
+        plot_convergence(prob, methods, title=prob.name)
+        return
+
+    if len(args) == 1:
+        pname = args[0]
+        if pname not in problems:
+            print(f"Unknown problem '{pname}'. Available: {', '.join(problems)}")
+            sys.exit(1)
+        prob = problems[pname]
+        print(f"Running convergence plot for {prob.name} with all methods...")
+        plot_convergence(prob, methods, title=prob.name)
+        return
+
+    if len(args) == 2:
+        pname, mlabel = args
+        if pname not in problems:
+            print(f"Unknown problem '{pname}'. Available: {', '.join(problems)}")
+            sys.exit(1)
+        if mlabel not in methods:
+            print(f"Unknown method '{mlabel}'. Available: {', '.join(methods)}")
+            sys.exit(1)
+        prob = problems[pname]
+        algo_name, opts = methods[mlabel]
+        print(f"{pname} x {mlabel}:")
+        run_single(prob, algo_name, opts)
+        return
+
+    print(__doc__)
+    sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

@@ -3,12 +3,15 @@
 # Code written by: Albert S. Berahas & Jiahao Shi
 # Modified by: Pearl Lin, Erick Vega, Colin Gordon
 
+import os
 import numpy as np
 import scipy.io
 import numpy.typing as npt
 from einops import rearrange
 
 Array = npt.NDArray[np.float64]
+
+_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 # Define all the functions and calculate their gradients and Hessians, those functions include:
 # (1)(2)(3)(4) Quadractic function
@@ -28,32 +31,29 @@ Array = npt.NDArray[np.float64]
 # function that computes the function value of the quad_10_10 function
 
 def quad_10_10_func(x: Array) -> float:
-    # set raondom seed
     np.random.seed(0)
     # Generate random data
     q = np.random.normal(size=(10,1))
 
-    mat = scipy.io.loadmat('data/quad_10_10_Q.mat')
+    mat = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_10_Q.mat'))
     Q = mat['Q']
     
     # compute function value
-    return (1/2*x.T@Q@x + q.T@x)[0]
+    return (1/2*x.T @ Q @ x + q.T @ x)[0]
 
 def quad_10_10_grad(x: Array) -> Array:
-    # set raondom seed
     np.random.seed(0)
     # Generate random data
     q = np.random.normal(size=(10,1))
-    mat = scipy.io.loadmat('data/quad_10_10_Q.mat')
+    mat = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_10_Q.mat'))
     Q = mat['Q']
     
-    return Q@x + q   
+    return Q @ x + q   
     
 
 def quad_10_10_Hess(x: Array) -> Array:
-    # set raondom seed
     np.random.seed(0)
-    mat = scipy.io.loadmat('data/quad_10_10_Q.mat')
+    mat = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_10_Q.mat'))
     Q = mat['Q']
     
     return Q
@@ -70,31 +70,23 @@ def quad_10_10_Hess(x: Array) -> Array:
  
 
 def quad_10_1000_func(x: Array) -> float:
-    # set raondom seed
     np.random.seed(0)
     # Generate random data
     q = np.random.normal(size=(10,1))
-
-    mat = scipy.io.loadmat('data/quad_10_1000_Q.mat')
-    Q = mat['Q']
+    Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_1000_Q.mat'))['Q']
     
-    # compute function value
-    return (1/2*x.T@Q@x + q.T@x)[0]
+    return float(0.5 * x.T @ Q @ x + q.T @ x)
+
 
 def quad_10_1000_grad(x: Array) -> Array:
     np.random.seed(0)
-    # Generate random data
     q = np.random.normal(size=(10,1))
-    mat = scipy.io.loadmat('data/quad_10_1000_Q.mat')
-    Q = mat['Q']
-    
-    return Q@x + q   
+    Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_1000_Q.mat'))['Q']
+    return Q @ x + q
+
 
 def quad_10_1000_Hess(x: Array) -> Array:
-    mat = scipy.io.loadmat('data/quad_10_1000_Q.mat')
-    Q = mat['Q']
-
-    return Q
+    return scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_1000_Q.mat'))['Q']
 
 # Problem Number: 3
 # Problem Name: quad_1000_10
@@ -106,34 +98,21 @@ def quad_10_1000_Hess(x: Array) -> Array:
 # function that computes the function value of the quad_1000_10 function
 
 def quad_1000_10_func(x: Array) -> float:
-    # set raondom seed
     np.random.seed(0)
-    # Generate random data
     q = np.random.normal(size=(1000,1))
+    Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_10_Q.mat'))['Q']
+    return float(0.5 * x.T @ Q @ x + q.T @ x)
 
-    mat = scipy.io.loadmat('data/quad_1000_10_Q.mat')
-    Q = mat['Q']
-    
-    # compute function value
-    return (1/2*x.T@Q@x + q.T@x)[0]
 
 def quad_1000_10_grad(x: Array) -> Array:
-    # set raondom seed
     np.random.seed(0)
-    # Generate random data
     q = np.random.normal(size=(1000,1))
-
-    mat = scipy.io.loadmat('data/quad_1000_10_Q.mat')
-    Q = mat['Q']
-    
-    # compute grad value
+    Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_10_Q.mat'))['Q']
     return Q @ x + q
 
+
 def quad_1000_10_Hess(x: Array) -> Array:
-    mat = scipy.io.loadmat('data/quad_1000_10_Q.mat')
-    Q = mat['Q']
-    # Q is Hessian for convex
-    return Q
+    return scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_10_Q.mat'))['Q']
 
 # Problem Number: 4
 # Problem Name: quad_1000_1000
@@ -145,35 +124,21 @@ def quad_1000_10_Hess(x: Array) -> Array:
 # function that computes the function value of the quad_10_10 function
 
 def quad_1000_1000_func(x: Array) -> float:
-    # set random seed
     np.random.seed(0)
-    # Generate random data
     q = np.random.normal(size=(1000,1))
-    
-    mat = scipy.io.loadmat('data/quad_1000_1000_Q.mat')
-    Q = mat['Q']
-    
-    # compute function value
-    return (1/2*x.T@Q@x + q.T@x)[0]
+    Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_1000_Q.mat'))['Q']
+    return float(0.5 * x.T @ Q @ x + q.T @ x)
+
 
 def quad_1000_1000_grad(x: Array) -> Array:
     np.random.seed(0)
-    # Generate random data
     q = np.random.normal(size=(1000,1))
-    
-    mat = scipy.io.loadmat('data/quad_1000_1000_Q.mat')
-    Q = mat['Q']
-    
-    # compute grad value
+    Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_1000_Q.mat'))['Q']
     return Q @ x + q
 
 
 def quad_1000_1000_Hess(x: Array) -> Array:
-    mat = scipy.io.loadmat('data/quad_1000_1000_Q.mat')
-    Q = mat['Q']
-    
-    # Q is Hessian
-    return Q
+    return scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_1000_Q.mat'))['Q']
 
 
 # Problem Number: 5
@@ -189,8 +154,7 @@ def quartic_1_func(x: Array) -> float:
      [0,0.5,3,0],
      [0.5,0,0,2]])
     sigma = 1e-4
-    
-    return 1/2*(x.T @x) + sigma/4*(x.T@Q@x)**2
+    return float(0.5 * (x.T @ x) + sigma / 4 * (x.T @ Q @ x) ** 2)
 
 def quartic_1_grad(x: Array) -> Array:
     Q = np.array([[5,1,0,0.5],
@@ -223,8 +187,7 @@ def quartic_2_func(x: Array) -> float:
      [0,0.5,3,0],
      [0.5,0,0,2]])
     sigma = 1e4
-    
-    return 1/2*(x.T@x) + sigma/4*(x.T@Q@x)**2
+    return float(0.5 * (x.T @ x) + sigma / 4 * (x.T @ Q @ x) ** 2)
 
 def quartic_2_grad(x: Array) -> Array:
     Q = np.array([[5,1,0,0.5],
@@ -444,7 +407,8 @@ def exp_1000_Hess(x: Array) -> Array:
 # function that computes the function value of the genhumps_5 function
 
 def genhumps_5_func(x: Array) -> float:
-    f = 0
+    x = rearrange(x, '... -> (...)')
+    f = 0.0
     for i in range(4):
         f = f + np.sin(2*x[i])**2*np.sin(2*x[i+1])**2 + 0.05*(x[i]**2 + x[i+1]**2)
     return f
@@ -452,26 +416,29 @@ def genhumps_5_func(x: Array) -> float:
 # function that computes the gradient of the genhumps_5 function
 
 def genhumps_5_grad(x: Array) -> Array:
-    g = [4*np.sin(2*x[0])*np.cos(2*x[0])* np.sin(2*x[1])**2                  + 0.1*x[0],
-         4*np.sin(2*x[1])*np.cos(2*x[1])*(np.sin(2*x[0])**2 + np.sin(2*x[2])**2) + 0.2*x[1],
-         4*np.sin(2*x[2])*np.cos(2*x[2])*(np.sin(2*x[1])**2 + np.sin(2*x[3])**2) + 0.2*x[2],
-         4*np.sin(2*x[3])*np.cos(2*x[3])*(np.sin(2*x[2])**2 + np.sin(2*x[4])**2) + 0.2*x[3],
-         4*np.sin(2*x[4])*np.cos(2*x[4])* np.sin(2*x[3])**2                  + 0.1*x[4]]
-    
-    return np.array(g)
+    x = rearrange(x, '... -> (...)')
+    g = np.zeros((5, 1))
+    g[0] = 4*np.sin(2*x[0])*np.cos(2*x[0]) * np.sin(2*x[1])**2 + 0.1*x[0]
+    g[1] = 4*np.sin(2*x[1])*np.cos(2*x[1]) * (np.sin(2*x[0])**2 + np.sin(2*x[2])**2) + 0.2*x[1]
+    g[2] = 4*np.sin(2*x[2])*np.cos(2*x[2]) * (np.sin(2*x[1])**2 + np.sin(2*x[3])**2) + 0.2*x[2]
+    g[3] = 4*np.sin(2*x[3])*np.cos(2*x[3]) * (np.sin(2*x[2])**2 + np.sin(2*x[4])**2) + 0.2*x[3]
+    g[4] = 4*np.sin(2*x[4])*np.cos(2*x[4]) * np.sin(2*x[3])**2 + 0.1*x[4]
+    return g
+
 
 # function that computes the Hessian of the genhumps_5 function
 def genhumps_5_Hess(x: Array) -> Array:
-    H = np.zeros((5,5))
-    H[0,0] =  8* np.sin(2*x[1])**2*(np.cos(2*x[0])**2 - np.sin(2*x[0])**2) + 0.1
-    H[0,1] = 16* np.sin(2*x[0])*np.cos(2*x[0])*np.sin(2*x[1])*np.cos(2*x[1])
-    H[1,1] =  8*(np.sin(2*x[0])**2 + np.sin(2*x[2])**2)*(np.cos(2*x[1])**2 - np.sin(2*x[1])**2) + 0.2
-    H[1,2] = 16* np.sin(2*x[1])*np.cos(2*x[1])*np.sin(2*x[2])*np.cos(2*x[2])
-    H[2,2] =  8*(np.sin(2*x[1])**2 + np.sin(2*x[3])**2)*(np.cos(2*x[2])**2 - np.sin(2*x[2])**2) + 0.2
-    H[2,3] = 16* np.sin(2*x[2])*np.cos(2*x[2])*np.sin(2*x[3])*np.cos(2*x[3])
-    H[3,3] =  8*(np.sin(2*x[2])**2 + np.sin(2*x[4])**2)*(np.cos(2*x[3])**2 - np.sin(2*x[3])**2) + 0.2
-    H[3,4] = 16* np.sin(2*x[3])*np.cos(2*x[3])*np.sin(2*x[4])*np.cos(2*x[4])
-    H[4,4] =  8* np.sin(2*x[3])**2*(np.cos(2*x[4])**2 - np.sin(2*x[4])**2) + 0.1
+    x = rearrange(x, '... -> (...)')
+    H = np.zeros((5, 5))
+    H[0,0] =  8 * np.sin(2*x[1])**2 * (np.cos(2*x[0])**2 - np.sin(2*x[0])**2) + 0.1
+    H[0,1] = 16 * np.sin(2*x[0])*np.cos(2*x[0]) * np.sin(2*x[1])*np.cos(2*x[1])
+    H[1,1] =  8 * (np.sin(2*x[0])**2 + np.sin(2*x[2])**2) * (np.cos(2*x[1])**2 - np.sin(2*x[1])**2) + 0.2
+    H[1,2] = 16 * np.sin(2*x[1])*np.cos(2*x[1]) * np.sin(2*x[2])*np.cos(2*x[2])
+    H[2,2] =  8 * (np.sin(2*x[1])**2 + np.sin(2*x[3])**2) * (np.cos(2*x[2])**2 - np.sin(2*x[2])**2) + 0.2
+    H[2,3] = 16 * np.sin(2*x[2])*np.cos(2*x[2]) * np.sin(2*x[3])*np.cos(2*x[3])
+    H[3,3] =  8 * (np.sin(2*x[2])**2 + np.sin(2*x[4])**2) * (np.cos(2*x[3])**2 - np.sin(2*x[3])**2) + 0.2
+    H[3,4] = 16 * np.sin(2*x[3])*np.cos(2*x[3]) * np.sin(2*x[4])*np.cos(2*x[4])
+    H[4,4] =  8 * np.sin(2*x[3])**2 * (np.cos(2*x[4])**2 - np.sin(2*x[4])**2) + 0.1
     H[1,0] = H[0,1]
     H[2,1] = H[1,2]
     H[3,2] = H[2,3]
