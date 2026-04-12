@@ -66,7 +66,7 @@ def setOptions(options: SolverOptions):
     pass
     return options
 
-def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: SolverOptions):
+def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: SolverOptions, f_vals: list[float]=None):
 
     # set problem, method, and options
     problem = setProblem(problem)
@@ -105,6 +105,10 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
 
         # take a step in the method
         results = method.step(x, f, g, H, Hinv_approx, H_approx, delta, internal_state, problem, options)
+
+        # for plotting purposes
+        if f_vals is not None:
+            f_vals.append(f)
 
         # update function values
         x = results.x_new

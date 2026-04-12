@@ -19,3 +19,4 @@ class SolverObjective:
     value: Callable[[Array], float] = None
     grad: Callable[[Array], Array] = None
     hess: Callable[[Array], Array] = None
+    f_star: float = None
