@@ -279,7 +279,52 @@ def lbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: S
     return results
 
 def ddbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjective, options: SolverOptions):
-    pass
+    
+    # search direction is the Newton direction, but with the inverse Hessian approximation
+    d = -Hinv_approx @ g
+
+    # determine the step size
+    alpha = 0
+    match options.line_search.method:
+        case 'Backtracking':
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case 'Wolfe':
+            alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case _:
+            raise ValueError("Line search method is invalid!")
+    
+    x_new = x + alpha*d
+    f_new = objective.value(x_new)
+    g_new = objective.grad(x_new)
+
+    s_k = x_new - x
+    y_k = g_new - g
+
+    # incorporate both Powell's damping on H and Powell's damping on B = I
+    theta_1_k = 1
+    if (s_k.transpose() @ y_k < 0.2*y_k.transpose() @ Hinv_approx @ y_k):
+        theta_1_k = (0.8*y_k.transpose() @ Hinv_approx @ y_k) / (y_k.transpose() @ Hinv_approx @ y_k - s_k.transpose() @ y_k)
+
+    s_mod_k = theta_1_k * s_k + (1 - theta_1_k) * Hinv_approx @ y_k
+
+    theta_2_k = 1
+    if (s_mod_k.transpose() @ y_k < 0.2*s_mod_k.transpose() @ s_mod_k):
+        theta_2_k = (0.8*s_mod_k.transpose() @ s_mod_k) / (s_mod_k.transpose() @ s_mod_k - s_mod_k.transpose() @ y_k)
+
+    y_mod_k = theta_2_k * y_k + (1 - theta_2_k) * s_mod_k
+
+
+    # update using BFGS formula, replacing s_k with s_mod_k: choice of theta ensures positive definite-ness of update
+    Hinv_approx_new = (np.eye(np.size(Hinv_approx, 0)) - (s_mod_k @ y_mod_k.transpose()) / (s_mod_k.transpose() @ y_mod_k)) @ Hinv_approx @ (np.eye(np.size(Hinv_approx, 0)) - (y_mod_k @ s_mod_k.transpose()) / (s_mod_k.transpose() @ y_mod_k)) + (s_mod_k @ s_mod_k.transpose()) / (s_mod_k.transpose() @ y_mod_k)
+    
+    results = StepResults(x_new=x_new,
+                          f_new=f_new,
+                          g_new=g_new,
+                          Hinv_approx_new=Hinv_approx_new,
+                          d=d,
+                          alpha=alpha)
+    
+    return results
 
 
 def dlbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: SolverObjective, options: SolverOptions):

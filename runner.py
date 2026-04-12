@@ -63,6 +63,10 @@ bfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe',
 dbfgs_wolfe_method = SolverAlgorithm(name='D-BFGS')
 dbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
 
+# set up Wolfe DDBFGS method and options
+ddbfgs_wolfe_method = SolverAlgorithm(name='DD-BFGS')
+ddbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
+
 # set up Wolfe CBFGS method and options
 cbfgs_wolfe_method = SolverAlgorithm(name='C-BFGS')
 cbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe', c1=c1), bfgs=BFGSVariantOptions(sy_tol=epsilon_sy), max_iterations=max_iters, term_tol=epsilon)
@@ -113,6 +117,8 @@ dlbfgs_wolfe_options = SolverOptions(line_search=LineSearchOptions(method='Wolfe
 # x, f = optSolver(problem=rosen_2_problem, method=bfgs_wolfe_method, options=bfgs_wolfe_options)
 # print(f'x: {x}, f: {f}')
 x, f = optSolver(problem=rosen_2_problem, method=dbfgs_wolfe_method, options=dbfgs_wolfe_options)
+print(f'x: {x}, f: {f}')
+x, f = optSolver(problem=rosen_2_problem, method=ddbfgs_wolfe_method, options=ddbfgs_wolfe_options)
 print(f'x: {x}, f: {f}')
 # x, f = optSolver(problem=rosen_2_problem, method=cbfgs_wolfe_method, options=cbfgs_wolfe_options)
 # print(f'x: {x}, f: {f}')

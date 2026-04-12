@@ -1,6 +1,6 @@
 import numpy as np
 from algorithms.algorithms import gradient_descent, newton, bfgs, dbfgs, cbfgs, lbfgs, dfp, trnewtoncg, trsr1cg, \
-    dlbfgs
+    dlbfgs, ddbfgs
 from algorithms.base import SolverAlgorithm
 from algorithms.utils import VectorCircularBuffer, LBFGSState
 from objectives.base import SolverObjective
@@ -48,6 +48,8 @@ def setMethod(method: SolverAlgorithm):
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: bfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'D-BFGS':
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: dbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
+        case 'DD-BFGS':
+            method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: ddbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'C-BFGS':
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: cbfgs(x=x, f=f, g=g, Hinv_approx=Hinv_approx, objective=objective, options=options)
         case 'L-BFGS':
