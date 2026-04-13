@@ -223,7 +223,7 @@ def cbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObj
     g_new = objective.grad(x_new)
     Hinv_approx_new = Hinv_approx
 
-    # update the inverse Hessian approximation, only if the CAUTIOUS BFGS tolerance is met
+    # update the inverse Hessian approximation, only if the CAUTIOUS tolerance is met
     s_k = x_new - x
     y_k = g_new - g
     
@@ -374,6 +374,101 @@ def dlbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: 
                           internal_state=internal_state)
 
     return results
+
+def clbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: SolverObjective, options: SolverOptions):
+
+    Hinv_approx_init = np.eye(np.size(x, 0))
+    if options.bfgs.Hinv_approx_init is not None:
+        Hinv_approx_init = options.bfgs.Hinv_approx_init
+
+    d = two_loop_recursion(v=g, Hinv_approx_init=Hinv_approx_init, s_buffer=internal_state.s_buffer, y_buffer=internal_state.y_buffer)
+
+    # determine the step size
+    alpha = 0
+    match options.line_search.method:
+        case 'Backtracking':
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case 'Wolfe':
+            alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case _:
+            raise ValueError("Line search method is invalid!")
+
+    x_new = x + alpha * d
+    f_new = objective.value(x_new)
+    g_new = objective.grad(x_new)
+
+    # update the internal state, only if the CAUTIOUS tolerance is met
+    s_k = x_new - x
+    y_k = g_new - g
+
+    if y_k.transpose() @ s_k >= options.bfgs.cautious_tol * pow(np.linalg.norm(g), options.bfgs.cautious_alpha) * pow(np.linalg.norm(s_k), 2):
+        internal_state.s_buffer.append(np.squeeze(s_k))
+        internal_state.y_buffer.append(np.squeeze(y_k))
+
+    results = StepResults(x_new=x_new,
+                          f_new=f_new,
+                          g_new=g_new,
+                          d=d,
+                          alpha=alpha,
+                          internal_state=internal_state)
+
+    return results
+
+def ddlbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: SolverObjective, options: SolverOptions):
+
+    Hinv_approx_init = np.eye(np.size(x, 0))
+    if options.bfgs.Hinv_approx_init is not None:
+        Hinv_approx_init = options.bfgs.Hinv_approx_init
+
+    d = two_loop_recursion(v=g, Hinv_approx_init=Hinv_approx_init, s_buffer=internal_state.s_buffer, y_buffer=internal_state.y_buffer)
+
+    # determine the step size
+    alpha = 0
+    match options.line_search.method:
+        case 'Backtracking':
+            alpha = backtracking_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case 'Wolfe':
+            alpha = weak_wolfe_line_search(x=x, f=f, g=g, d=d, objective=objective, options=options)
+        case _:
+            raise ValueError("Line search method is invalid!")
+
+    x_new = x + alpha * d
+    f_new = objective.value(x_new)
+    g_new = objective.grad(x_new)
+
+    # compute H_k * g_new using 2 loop recursion to get H_k * y_k = H_k (g_new - g)
+    d_new = two_loop_recursion(v=g_new, Hinv_approx_init=Hinv_approx_init, s_buffer=internal_state.s_buffer, y_buffer=internal_state.y_buffer)
+    Hy = d_new - d
+
+    # incorporate Powell's damping on H (inverse Hessian)
+    s_k = x_new - x
+    y_k = g_new - g
+
+    # incorporate both Powell's damping on H (inverse Hessian) and Powell's damping on B (Hessian) = I
+    theta_1_k = 1
+    if (s_k.transpose() @ y_k < 0.2*y_k.transpose() @ Hy):
+        theta_1_k = (0.8*y_k.transpose() @ Hy) / (y_k.transpose() @ Hy - s_k.transpose() @ y_k)
+
+    s_mod_k = theta_1_k * s_k + (1 - theta_1_k) * Hy
+
+    theta_2_k = 1
+    if (s_mod_k.transpose() @ y_k < 0.2*s_mod_k.transpose() @ s_mod_k):
+        theta_2_k = (0.8*s_mod_k.transpose() @ s_mod_k) / (s_mod_k.transpose() @ s_mod_k - s_mod_k.transpose() @ y_k)
+
+    y_mod_k = theta_2_k * y_k + (1 - theta_2_k) * s_mod_k
+
+    internal_state.s_buffer.append(np.squeeze(s_mod_k))
+    internal_state.y_buffer.append(np.squeeze(y_mod_k))
+
+    results = StepResults(x_new=x_new,
+                          f_new=f_new,
+                          g_new=g_new,
+                          d=d,
+                          alpha=alpha,
+                          internal_state=internal_state)
+
+    return results
+
 
 def dfp(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjective, options: SolverOptions):
 

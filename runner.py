@@ -83,10 +83,12 @@ def build_methods() -> dict[str, tuple[str, SolverOptions]]:
         "BFGS_Backtracking":  ("BFGS",            SolverOptions(line_search=BACKTRACKING)),
         "BFGS_Wolfe":         ("BFGS",            SolverOptions(line_search=WOLFE)),
         "D-BFGS_Wolfe":       ("D-BFGS",          SolverOptions(line_search=WOLFE)),
-        "DD-BFGS_Wolfe":      ("DD-BFGS",         SolverOptions(line_search=WOLFE)),
         "C-BFGS_Wolfe":       ("C-BFGS",          SolverOptions(line_search=WOLFE)),
+        "DD-BFGS_Wolfe":      ("DD-BFGS",         SolverOptions(line_search=WOLFE)),
         "L-BFGS_Wolfe":       ("L-BFGS",          SolverOptions(line_search=WOLFE)),
         "D-L-BFGS_Wolfe":     ("D-L-BFGS",        SolverOptions(line_search=WOLFE)),
+        "C-L-BFGS_Wolfe":     ("C-L-BFGS",        SolverOptions(line_search=WOLFE)),
+        "DD-L-BFGS_Wolfe":    ("DD-L-BFGS",       SolverOptions(line_search=WOLFE)),
         "DFP_Backtracking":   ("DFP",             SolverOptions(line_search=BACKTRACKING)),
         "DFP_Wolfe":          ("DFP",             SolverOptions(line_search=WOLFE)),
     }
@@ -101,7 +103,7 @@ FAMILY_CMAPS: list[tuple[str, list[str]]] = [
     ("Oranges", ["TR-Newton-CG", "TR-SR1-CG"]),
     ("RdPu",    ["BFGS_Backtracking", "BFGS_Wolfe"]),
     ("YlOrBr",  ["D-BFGS_Wolfe", "DD-BFGS_Wolfe", "C-BFGS_Wolfe"]),
-    ("PuBu",    ["L-BFGS_Wolfe", "D-L-BFGS_Wolfe"]),
+    ("cividis",    ["L-BFGS_Wolfe", "D-L-BFGS_Wolfe"]),
     ("Purples", ["DFP_Backtracking", "DFP_Wolfe"]),
 ]
 
@@ -112,7 +114,7 @@ def _build_color_map() -> dict[str, tuple]:
         cmap = plt.get_cmap(cmap_name)
         n = len(labels)
         for i, label in enumerate(labels):
-            colors[label] = cmap(0.4 + 0.6 * i / max(n - 1, 1))
+            colors[label] = cmap(0.4 + 0.3 * i / max(n - 1, 1))
     return colors
 
 
@@ -152,7 +154,7 @@ def plot_convergence(
     ax.set_xlabel("Iteration k")
     ax.set_ylabel("f(x_k) - f*")
     ax.set_title(title or problem.name)
-    ax.legend(bbox_to_anchor=(0.5, -0.18), loc="upper center", ncol=4, fontsize=7)
+    ax.legend(bbox_to_anchor=(0.5, -0.18), loc="upper center", ncol=5, fontsize=7)
     fig.tight_layout()
 
     out = Path(save_dir)
@@ -183,6 +185,8 @@ def run_single(
 def main() -> None:
     problems = build_problems()
     methods = build_methods()
+
+    run_single(problem=problems['Rosenbrock-2'], algo_name=methods['DD-L-BFGS_Wolfe'][0], options=methods['DD-L-BFGS_Wolfe'][1])
 
     args = sys.argv[1:]
 
