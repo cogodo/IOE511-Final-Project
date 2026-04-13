@@ -128,8 +128,8 @@ class LBFGSState(InternalAlgorithmState):
     s_buffer: VectorCircularBuffer
     y_buffer: VectorCircularBuffer
 
-def two_loop_recursion(g: Array, Hinv_approx_init: Array, s_buffer: VectorCircularBuffer, y_buffer: VectorCircularBuffer):
-    q = np.squeeze(np.copy(g))
+def two_loop_recursion(v: Array, Hinv_approx_init: Array, s_buffer: VectorCircularBuffer, y_buffer: VectorCircularBuffer):
+    q = np.squeeze(np.copy(v))
 
     s_array = s_buffer.get_ordered()
     y_array = y_buffer.get_ordered()
