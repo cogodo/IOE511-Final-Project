@@ -349,13 +349,12 @@ def dlbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: 
     f_new = objective.value(x_new)
     g_new = objective.grad(x_new)
 
-    # compute H_k * g_new using 2 loop recursion to get H_k * y_k = H_k (g_new - g)
-    d_new = two_loop_recursion(v=g_new, Hinv_approx_init=Hinv_approx_init, s_buffer=internal_state.s_buffer, y_buffer=internal_state.y_buffer)
-    Hy = d_new - d
-
     # incorporate Powell's damping on H (inverse Hessian)
     s_k = x_new - x
     y_k = g_new - g
+
+    # compute H_k * y_k using 2 loop recursion
+    Hy = two_loop_recursion(v=-y_k, Hinv_approx_init=Hinv_approx_init, s_buffer=internal_state.s_buffer, y_buffer=internal_state.y_buffer)
 
     theta_k = 1
     if (s_k.transpose() @ y_k < 0.2*y_k.transpose() @ Hy):
