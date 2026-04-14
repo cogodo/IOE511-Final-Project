@@ -75,7 +75,7 @@ def quad_10_1000_func(x: Array) -> float:
     q = np.random.normal(size=(10,1))
     Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_1000_Q.mat'))['Q']
     
-    return float(0.5 * x.T @ Q @ x + q.T @ x)
+    return (0.5 * x.T @ Q @ x + q.T @ x)[0]
 
 
 def quad_10_1000_grad(x: Array) -> Array:
@@ -101,7 +101,7 @@ def quad_1000_10_func(x: Array) -> float:
     np.random.seed(0)
     q = np.random.normal(size=(1000,1))
     Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_10_Q.mat'))['Q']
-    return float(0.5 * x.T @ Q @ x + q.T @ x)
+    return (0.5 * x.T @ Q @ x + q.T @ x)[0]
 
 
 def quad_1000_10_grad(x: Array) -> Array:
@@ -127,7 +127,7 @@ def quad_1000_1000_func(x: Array) -> float:
     np.random.seed(0)
     q = np.random.normal(size=(1000,1))
     Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_1000_Q.mat'))['Q']
-    return float(0.5 * x.T @ Q @ x + q.T @ x)
+    return (0.5 * x.T @ Q @ x + q.T @ x)[0]
 
 
 def quad_1000_1000_grad(x: Array) -> Array:
@@ -154,7 +154,7 @@ def quartic_1_func(x: Array) -> float:
      [0,0.5,3,0],
      [0.5,0,0,2]])
     sigma = 1e-4
-    return float(0.5 * (x.T @ x) + sigma / 4 * (x.T @ Q @ x) ** 2)
+    return (0.5 * (x.T @ x) + sigma / 4 * (x.T @ Q @ x) ** 2)[0]
 
 def quartic_1_grad(x: Array) -> Array:
     Q = np.array([[5,1,0,0.5],
@@ -163,7 +163,7 @@ def quartic_1_grad(x: Array) -> Array:
      [0.5,0,0,2]])
     sigma = 1e-4
     Qx = Q @ x
-    return x + sigma * float(x.T @ Qx) * Qx
+    return x + sigma * (x.T @ Qx)[0] * Qx
 
 def quartic_1_Hess(x: Array) -> Array:
     Q = np.array([[5,1,0,0.5],
@@ -172,7 +172,7 @@ def quartic_1_Hess(x: Array) -> Array:
      [0.5,0,0,2]])
     sigma = 1e-4
     Qx = Q @ x
-    return np.eye(4) + sigma * (2 * Qx @ Qx.T + float(x.T @ Q @ x) * Q)
+    return np.eye(4) + sigma * (2 * Qx @ Qx.T + (x.T @ Q @ x)[0] * Q)
 
 # Problem Number: 6
 # Problem Name: quartic_2
@@ -187,7 +187,7 @@ def quartic_2_func(x: Array) -> float:
      [0,0.5,3,0],
      [0.5,0,0,2]])
     sigma = 1e4
-    return float(0.5 * (x.T @ x) + sigma / 4 * (x.T @ Q @ x) ** 2)
+    return (0.5 * (x.T @ x) + sigma / 4 * (x.T @ Q @ x) ** 2)[0]
 
 def quartic_2_grad(x: Array) -> Array:
     Q = np.array([[5,1,0,0.5],
@@ -196,7 +196,7 @@ def quartic_2_grad(x: Array) -> Array:
      [0.5,0,0,2]])
     sigma = 1e4
     Qx = Q @ x
-    return x + sigma * float(x.T @ Qx) * Qx
+    return x + sigma * (x.T @ Qx)[0] * Qx
 
 def quartic_2_Hess(x: Array) -> Array:
     Q = np.array([[5,1,0,0.5],
@@ -205,7 +205,7 @@ def quartic_2_Hess(x: Array) -> Array:
      [0.5,0,0,2]])
     sigma = 1e4
     Qx = Q @ x
-    return np.eye(4) + sigma * (2 * Qx @ Qx.T + float(x.T @ Q @ x) * Q)
+    return np.eye(4) + sigma * (2 * Qx @ Qx.T + (x.T @ Q @ x)[0] * Q)
 
 # Problem Number: 7
 # Problem Name: Rosenbrock_2
