@@ -129,7 +129,7 @@ class LBFGSState(InternalAlgorithmState):
     y_buffer: VectorCircularBuffer
 
 def two_loop_recursion(v: Array, Hinv_approx_init: Array, s_buffer: VectorCircularBuffer, y_buffer: VectorCircularBuffer):
-    q = np.squeeze(np.copy(v))
+    q = np.atleast_1d(np.squeeze(np.copy(v)))
 
     s_array = s_buffer.get_ordered()
     y_array = y_buffer.get_ordered()
@@ -156,6 +156,7 @@ def two_loop_recursion(v: Array, Hinv_approx_init: Array, s_buffer: VectorCircul
         yi = y_array[ii]
         betas[ii] = rho[ii]* np.dot(yi, r)
         r = r + si*(alphas[ii] - betas[ii])
+
 
     return -r[:, None]
 
