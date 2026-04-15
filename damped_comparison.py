@@ -118,11 +118,13 @@ def main():
     line_search_name = 'Wolfe'
 
 
+    dimensions = np.logspace(2, 4, 20).round().astype(int)
     results_by_algorithm = {}
     for method_name in ['L-BFGS', 'D-L-BFGS', 'C-L-BFGS', 'DD-L-BFGS']:
-
+        print(method_name)
         results = []
-        for n in [1, 10, 100]:
+        for n in dimensions:
+            print(n)
             x_star = np.ones(n)
             x0 = vardim_x0(n).reshape(-1, 1)
             problem = SolverObjective(name = 'vardim', value=vardim_f, grad=vardim_g, hess=vardim_H, x0 = x0)
@@ -134,6 +136,15 @@ def main():
         results_by_algorithm[method_name] = results
 
 
+    plt.figure()
+    for method, results in results_by_algorithm.items():
+        iterations = [r.iterations for r in results]
+
+        plt.semilogx(dimensions, iterations, label=method, marker='o')
+        plt.xlabel('Dimension')
+        plt.ylabel('Iteration Count')
+        pass
+    plt.legend()
     pass
 
 
