@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from benchmark import run_one, RunResult, AlgoSpec
 from sklearn.model_selection import ParameterGrid
 
@@ -72,7 +74,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -82,7 +84,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -92,7 +94,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -102,7 +104,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -112,7 +114,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -122,7 +124,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -132,7 +134,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -142,7 +144,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -152,7 +154,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -162,7 +164,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -172,7 +174,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -182,7 +184,7 @@ def gridsearch(method_name: str, options: SolverOptions):
         row['CONVERGED'] = run_result.converged
         row['PROBLEM'] = run_result.problem
         row['ITERATIONS'] = run_result.iterations
-        row['TIME'] = run_result.wall_time_s
+        row['TIME'] = run_result.cpu_time_s
 
         all_results.append(row)
 
@@ -195,4 +197,4 @@ def gridsearch(method_name: str, options: SolverOptions):
 
 
 methods = build_methods()
-gridsearch(method_name=methods['D-L-BFGS_Wolfe'][0], options=methods['D-L-BFGS_Wolfe'][1])
+gridsearch(method_name=methods['BFGS_Wolfe'][0], options=methods['BFGS_Wolfe'][1])

@@ -107,7 +107,9 @@ class RunResult:
     problem: str
     algorithm: str
     iterations: int
-    wall_time_s: float
+    nfev: int
+    ngev: int
+    cpu_time_s: float
     f_final: float
     grad_norm_final: float
     converged: bool
@@ -118,11 +120,14 @@ def run_one(problem: SolverObjective, spec: AlgoSpec) -> RunResult:
     prob = copy.deepcopy(problem)
     method = SolverAlgorithm(name=spec.algo_name)
     f_vals: list[float] = []
+    counters: dict = {}
 
-    t0 = time.perf_counter()
+    t0 = time.process_time()
     try:
-        x, f = optSolver(prob, method, spec.options, f_vals=f_vals)
-        elapsed = time.perf_counter() - t0
+        x, f = optSolver(prob, method, spec.options, f_vals=f_vals, counters=counters)
+        elapsed = time.process_time() - t0
+        nfev = counters.get('nfev', 0)
+        ngev = counters.get('ngev', 0)
         g = prob.grad(x)
         gnorm = float(np.linalg.norm(g, ord=np.inf))
         g0 = prob.grad(prob.x0)
@@ -132,19 +137,23 @@ def run_one(problem: SolverObjective, spec: AlgoSpec) -> RunResult:
             problem=problem.name,
             algorithm=spec.label,
             iterations=len(f_vals),
-            wall_time_s=round(elapsed, 4),
+            nfev=nfev,
+            ngev=ngev,
+            cpu_time_s=round(elapsed, 4),
             f_final=float(np.squeeze(f)),
             grad_norm_final=gnorm,
             converged=converged,
             error=None,
         )
     except Exception as exc:
-        elapsed = time.perf_counter() - t0
+        elapsed = time.process_time() - t0
         return RunResult(
             problem=problem.name,
             algorithm=spec.label,
             iterations=len(f_vals),
-            wall_time_s=round(elapsed, 4),
+            nfev=counters.get('nfev', 0),
+            ngev=counters.get('ngev', 0),
+            cpu_time_s=round(elapsed, 4),
             f_final=float("nan"),
             grad_norm_final=float("nan"),
             converged=False,
@@ -157,7 +166,8 @@ def run_one(problem: SolverObjective, spec: AlgoSpec) -> RunResult:
 # ---------------------------------------------------------------------------
 
 def print_problem_table(problem_name: str, results: list[RunResult]) -> None:
-    hdr = f"{'Algorithm':<24} {'Iters':>6} {'Time (s)':>10} {'f_final':>14} {'||g||_inf':>12} {'Status':<10}"
+    hdr = (f"{'Algorithm':<24} {'Iters':>6} {'nfev':>6} {'ngev':>6} "
+           f"{'CPU (s)':>10} {'f_final':>14} {'||g||_inf':>12} {'Status':<10}")
     sep = "-" * len(hdr)
     print(f"\n{'=' * len(hdr)}")
     print(f"  Problem: {problem_name}")
@@ -172,8 +182,8 @@ def print_problem_table(problem_name: str, results: list[RunResult]) -> None:
         else:
             status = "MAX_ITER"
         print(
-            f"{r.algorithm:<24} {r.iterations:>6} {r.wall_time_s:>10.4f} "
-            f"{r.f_final:>14.6e} {r.grad_norm_final:>12.4e} {status:<10}"
+            f"{r.algorithm:<24} {r.iterations:>6} {r.nfev:>6} {r.ngev:>6} "
+            f"{r.cpu_time_s:>10.4f} {r.f_final:>14.6e} {r.grad_norm_final:>12.4e} {status:<10}"
             + (f"  {r.error}" if r.error else "")
         )
     print()
@@ -239,11 +249,11 @@ def main() -> None:
             prob_results.append(result)
 
             if result.error:
-                print(f"ERROR ({result.wall_time_s:.2f}s): {result.error}")
+                print(f"ERROR ({result.cpu_time_s:.2f}s): {result.error}")
             elif result.converged:
-                print(f"CONVERGED  iters={result.iterations:<5} f={result.f_final:.6e}  t={result.wall_time_s:.2f}s")
+                print(f"CONVERGED  iters={result.iterations:<5} nfev={result.nfev:<5} ngev={result.ngev:<5} f={result.f_final:.6e}  t={result.cpu_time_s:.2f}s")
             else:
-                print(f"MAX_ITER   iters={result.iterations:<5} f={result.f_final:.6e}  t={result.wall_time_s:.2f}s")
+                print(f"MAX_ITER   iters={result.iterations:<5} nfev={result.nfev:<5} ngev={result.ngev:<5} f={result.f_final:.6e}  t={result.cpu_time_s:.2f}s")
 
         print_problem_table(prob.name, prob_results)
         all_results.extend(prob_results)
@@ -258,7 +268,9 @@ def main() -> None:
             "problem": r.problem,
             "algorithm": r.algorithm,
             "iterations": r.iterations,
-            "wall_time_s": r.wall_time_s,
+            "nfev": r.nfev,
+            "ngev": r.ngev,
+            "cpu_time_s": r.cpu_time_s,
             "f_final": r.f_final if not np.isnan(r.f_final) else None,
             "grad_norm_final": r.grad_norm_final if not np.isnan(r.grad_norm_final) else None,
             "converged": r.converged,

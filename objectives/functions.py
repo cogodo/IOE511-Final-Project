@@ -54,7 +54,7 @@ def quad_10_10_grad(x: Array) -> Array:
 def quad_10_10_Hess(x: Array) -> Array:
     np.random.seed(0)
     mat = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_10_Q.mat'))
-    Q = mat['Q']
+    Q = np.asarray(mat['Q'].todense()) if hasattr(mat['Q'], 'todense') else np.asarray(mat['Q'])
     
     return Q
 
@@ -86,7 +86,8 @@ def quad_10_1000_grad(x: Array) -> Array:
 
 
 def quad_10_1000_Hess(x: Array) -> Array:
-    return scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_1000_Q.mat'))['Q']
+    Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_10_1000_Q.mat'))['Q']
+    return np.asarray(Q.todense()) if hasattr(Q, 'todense') else np.asarray(Q)
 
 # Problem Number: 3
 # Problem Name: quad_1000_10
@@ -112,7 +113,8 @@ def quad_1000_10_grad(x: Array) -> Array:
 
 
 def quad_1000_10_Hess(x: Array) -> Array:
-    return scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_10_Q.mat'))['Q']
+    Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_10_Q.mat'))['Q']
+    return np.asarray(Q.todense()) if hasattr(Q, 'todense') else np.asarray(Q)
 
 # Problem Number: 4
 # Problem Name: quad_1000_1000
@@ -138,7 +140,8 @@ def quad_1000_1000_grad(x: Array) -> Array:
 
 
 def quad_1000_1000_Hess(x: Array) -> Array:
-    return scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_1000_Q.mat'))['Q']
+    Q = scipy.io.loadmat(os.path.join(_DATA_DIR, 'quad_1000_1000_Q.mat'))['Q']
+    return np.asarray(Q.todense()) if hasattr(Q, 'todense') else np.asarray(Q)
 
 
 # Problem Number: 5

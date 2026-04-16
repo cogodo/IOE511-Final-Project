@@ -122,16 +122,22 @@ def setMethod(method: SolverAlgorithm):
             raise ValueError("Method name does not exist!")
     return method
 
-def setOptions(options: SolverOptions):
-    pass
-    return options
+def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: SolverOptions, f_vals: list[float]=None, counters: dict=None):
 
-def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: SolverOptions, f_vals: list[float]=None):
-
-    # set problem, method, and options
+    # set problem + method
     problem = setProblem(problem)
     method = setMethod(method)
-    options = setOptions(options)
+
+    if counters is not None:
+        _orig_value, _orig_grad = problem.value, problem.grad
+        _nfev, _ngev = [0], [0]
+        def _cv(*a, **kw):
+            _nfev[0] += 1
+            return _orig_value(*a, **kw)
+        def _cg(*a, **kw):
+            _ngev[0] += 1
+            return _orig_grad(*a, **kw)
+        problem.value, problem.grad = _cv, _cg
 
     # compute initial function/gradient/Hessian
     x = problem.x0
@@ -184,7 +190,8 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
         # increment iteration count
         k = k + 1
 
+    if counters is not None:
+        counters['nfev'] = _nfev[0]
+        counters['ngev'] = _ngev[0]
+
     return x, f
-
-
-    
