@@ -25,6 +25,16 @@ DATA = json.loads(Path("results/benchmark_results.json").read_text())
 OUTDIR = Path("plots")
 OUTDIR.mkdir(exist_ok=True)
 
+DIR_PERFPROF = OUTDIR / "performance_profiles"
+DIR_PERPROBLEM = OUTDIR / "per_problem_bars"
+DIR_BFGS = OUTDIR / "bfgs_variants"
+DIR_EVAL = OUTDIR / "eval_breakdowns"
+DIR_HEAT = OUTDIR / "heatmaps"
+DIR_SUMMARY = OUTDIR / "summaries"
+DIR_LS = OUTDIR / "linesearch"
+for _d in [DIR_PERFPROF, DIR_PERPROBLEM, DIR_BFGS, DIR_EVAL, DIR_HEAT, DIR_SUMMARY, DIR_LS]:
+    _d.mkdir(exist_ok=True)
+
 PROBLEMS = list(dict.fromkeys(r["problem"] for r in DATA))
 ALGORITHMS = list(dict.fromkeys(r["algorithm"] for r in DATA))
 LOOKUP = {(r["problem"], r["algorithm"]): r for r in DATA}
@@ -157,8 +167,7 @@ def _plot_performance_profile(
     ax.legend(fontsize=8, ncol=2, loc="lower right")
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig(OUTDIR / f"perfprof_{metric}{fname_suffix}.pdf", bbox_inches="tight")
-    fig.savefig(OUTDIR / f"perfprof_{metric}{fname_suffix}.png", dpi=200, bbox_inches="tight")
+    fig.savefig(DIR_PERFPROF / f"perfprof_{metric}{fname_suffix}.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -249,8 +258,7 @@ def plot_convergence_heatmap():
     ax.legend(handles=legend_elements, loc="upper right", fontsize=8)
 
     fig.tight_layout()
-    fig.savefig(OUTDIR / "convergence_heatmap.pdf", bbox_inches="tight")
-    fig.savefig(OUTDIR / "convergence_heatmap.png", dpi=200, bbox_inches="tight")
+    fig.savefig(DIR_HEAT / "convergence_heatmap.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
     print("  [done] convergence heatmap")
 
@@ -285,8 +293,7 @@ def plot_iteration_heatmap():
                 ax.add_patch(plt.Rectangle((ia - 0.5, ip - 0.5), 1, 1, fill=True, color="#d1d5db", zorder=2))
 
     fig.tight_layout()
-    fig.savefig(OUTDIR / "iteration_heatmap.pdf", bbox_inches="tight")
-    fig.savefig(OUTDIR / "iteration_heatmap.png", dpi=200, bbox_inches="tight")
+    fig.savefig(DIR_HEAT / "iteration_heatmap.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
     print("  [done] iteration heatmap")
 
@@ -320,8 +327,7 @@ def plot_per_problem_bars():
         fig.tight_layout()
 
         safe = problem.replace("-", "_").replace(" ", "_")
-        fig.savefig(OUTDIR / f"bar_iters_{safe}.pdf", bbox_inches="tight")
-        fig.savefig(OUTDIR / f"bar_iters_{safe}.png", dpi=200, bbox_inches="tight")
+        fig.savefig(DIR_PERPROBLEM / f"bar_iters_{safe}.png", dpi=200, bbox_inches="tight")
         plt.close(fig)
 
     print("  [done] per-problem bar charts")
@@ -351,8 +357,7 @@ def plot_iter_vs_cpu():
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig(OUTDIR / "scatter_iter_vs_cpu.pdf", bbox_inches="tight")
-    fig.savefig(OUTDIR / "scatter_iter_vs_cpu.png", dpi=200, bbox_inches="tight")
+    fig.savefig(DIR_SUMMARY / "scatter_iter_vs_cpu.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
     print("  [done] iter vs cpu scatter")
 
@@ -394,8 +399,7 @@ def plot_eval_breakdown():
         fig.tight_layout()
 
         safe = problem.replace("-", "_").replace(" ", "_")
-        fig.savefig(OUTDIR / f"eval_breakdown_{safe}.pdf", bbox_inches="tight")
-        fig.savefig(OUTDIR / f"eval_breakdown_{safe}.png", dpi=200, bbox_inches="tight")
+        fig.savefig(DIR_EVAL / f"eval_breakdown_{safe}.png", dpi=200, bbox_inches="tight")
         plt.close(fig)
 
     print("  [done] eval breakdown charts")
@@ -428,8 +432,7 @@ def plot_family_summary_bars():
         ax.set_yscale("log")
         ax.grid(axis="y", alpha=0.3)
         fig.tight_layout()
-        fig.savefig(OUTDIR / f"{fname}_all.pdf", bbox_inches="tight")
-        fig.savefig(OUTDIR / f"{fname}_all.png", dpi=200, bbox_inches="tight")
+        fig.savefig(DIR_SUMMARY / f"{fname}_all.png", dpi=200, bbox_inches="tight")
         plt.close(fig)
 
     print("  [done] family summary bars")
@@ -463,8 +466,7 @@ def plot_convergence_rate():
                 f"{rate:.0%}", ha="center", va="bottom", fontsize=7)
 
     fig.tight_layout()
-    fig.savefig(OUTDIR / "convergence_rate.pdf", bbox_inches="tight")
-    fig.savefig(OUTDIR / "convergence_rate.png", dpi=200, bbox_inches="tight")
+    fig.savefig(DIR_SUMMARY / "convergence_rate.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
     print("  [done] convergence rate bar")
 
@@ -506,8 +508,7 @@ def plot_small_vs_large():
         ax.set_yscale("log")
         ax.grid(axis="y", alpha=0.3)
         fig.tight_layout()
-        fig.savefig(OUTDIR / f"bar_{group_name}.pdf", bbox_inches="tight")
-        fig.savefig(OUTDIR / f"bar_{group_name}.png", dpi=200, bbox_inches="tight")
+        fig.savefig(DIR_PERPROBLEM / f"bar_{group_name}.png", dpi=200, bbox_inches="tight")
         plt.close(fig)
 
     print("  [done] small vs large dim bars")
@@ -554,8 +555,7 @@ def plot_linesearch_comparison():
         fig.suptitle(f"Backtracking vs Wolfe — {ylabel}", fontsize=13, y=1.02)
         fig.tight_layout()
         safe = metric.replace("_", "")
-        fig.savefig(OUTDIR / f"linesearch_cmp_{safe}.pdf", bbox_inches="tight")
-        fig.savefig(OUTDIR / f"linesearch_cmp_{safe}.png", dpi=200, bbox_inches="tight")
+        fig.savefig(DIR_LS / f"linesearch_cmp_{safe}.png", dpi=200, bbox_inches="tight")
         plt.close(fig)
 
     print("  [done] line search comparison")
@@ -612,8 +612,7 @@ def plot_bfgs_variants():
         fig.tight_layout()
 
         safe = problem.replace("-", "_").replace(" ", "_")
-        fig.savefig(OUTDIR / f"bfgs_bar_{safe}.pdf", bbox_inches="tight")
-        fig.savefig(OUTDIR / f"bfgs_bar_{safe}.png", dpi=200, bbox_inches="tight")
+        fig.savefig(DIR_BFGS / f"bfgs_bar_{safe}.png", dpi=200, bbox_inches="tight")
         plt.close(fig)
 
     print("  [done] BFGS variant comparison")
