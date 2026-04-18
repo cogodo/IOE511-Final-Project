@@ -82,6 +82,7 @@ def trnewtoncg(x: Array, f: Array, g: Array, H: Array, delta: float, objective: 
 
     # direction is the solution to the TR subproblem with B_k equal to the exact Hessian
     d = cg(f=f, g=g, B=H, delta=delta, options=options)
+    # rho = actual reduction / predicted reduction
     rho = (f - objective.value(x + d)) / (eval_m_k(f_k=f, g_k=g, B_k=H, d=np.zeros(np.shape(x))) - eval_m_k(f_k=f, g_k=g, B_k=H, d=d))
 
     # trust region update
@@ -101,6 +102,7 @@ def trsr1cg(x: Array, f: Array, g: Array, H_approx: Array, delta: float, objecti
 
     # direction is the solution to the TR subproblem with B_k equal to the SR1 Hessian approximation
     d = cg(f=f, g=g, B=H_approx, delta=delta, options=options)
+    # rho = actual reduction / predicted reduction
     rho = (f - objective.value(x + d)) / (eval_m_k(f_k=f, g_k=g, B_k=H_approx, d=np.zeros(np.shape(x))) - eval_m_k(f_k=f, g_k=g, B_k=H_approx, d=d))
 
     # trust region update
@@ -113,7 +115,9 @@ def trsr1cg(x: Array, f: Array, g: Array, H_approx: Array, delta: float, objecti
     s_k = x_new - x
     y_k = g_new - g
 
+    # skip SR1 update if step was rejected (x unchanged) or denominator is near-singular
     if not np.array_equal(x_new, x) and np.abs((y_k - H_approx @ s_k).transpose() @ s_k) >= options.bfgs.sr1_tol * np.linalg.norm(y_k - H_approx @ s_k) * np.linalg.norm(s_k):
+        # SR1 rank-1 update: B_{k+1} = B_k + (y-Bs)(y-Bs)^T / (y-Bs)^T s
         H_approx_new = H_approx + ((y_k - H_approx @ s_k) @ (y_k - H_approx @ s_k).transpose()) / ((y_k - H_approx @ s_k).transpose() @ s_k)
 
     results = StepResults(x_new=x_new,
@@ -150,7 +154,9 @@ def bfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObje
     s_k = x_new - x
     y_k = g_new - g
     
+    # skip update when s^T y is too small (near-singular)
     if s_k.transpose() @ y_k >= options.bfgs.sy_tol * np.linalg.norm(s_k) * np.linalg.norm(y_k):
+        # Sherman-Morrison-Woodbury BFGS inverse Hessian update
         Hinv_approx_new = (np.eye(np.size(Hinv_approx, 0)) - (s_k @ y_k.transpose()) / (s_k.transpose() @ y_k)) @ Hinv_approx @ (np.eye(np.size(Hinv_approx, 0)) - (y_k @ s_k.transpose()) / (s_k.transpose() @ y_k)) + (s_k @ s_k.transpose()) / (s_k.transpose() @ y_k)
     
     results = StepResults(x_new=x_new,
@@ -186,9 +192,12 @@ def dbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObj
 
     # incorporate Powell's damping on H (inverse Hessian)
     theta_k = 1
+    # check if s^T y < 0.2 * y^T H y (insufficient curvature)
     if (s_k.transpose() @ y_k < 0.2*y_k.transpose() @ Hinv_approx @ y_k):
+        # interpolate s toward H*y to guarantee s_mod^T y > 0
         theta_k = (0.8*y_k.transpose() @ Hinv_approx @ y_k) / (y_k.transpose() @ Hinv_approx @ y_k - s_k.transpose() @ y_k)
 
+    # damped step: convex combination of s_k and H_k * y_k
     s_mod_k = theta_k * s_k + (1 - theta_k) * Hinv_approx @ y_k
 
     # update using BFGS formula, replacing s_k with s_mod_k: choice of theta ensures positive definite-ness of update
@@ -227,6 +236,7 @@ def cbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObj
     s_k = x_new - x
     y_k = g_new - g
     
+    # Li & Fukushima cautious condition: y^T s >= eps * ||g||^alpha * ||s||^2
     if y_k.transpose() @ s_k >= options.bfgs.cautious_tol * pow(np.linalg.norm(g), options.bfgs.cautious_alpha) * pow(np.linalg.norm(s_k), 2):
         Hinv_approx_new = (np.eye(np.size(Hinv_approx, 0)) - (s_k @ y_k.transpose()) / (s_k.transpose() @ y_k)) @ Hinv_approx @ (np.eye(np.size(Hinv_approx, 0)) - (y_k @ s_k.transpose()) / (s_k.transpose() @ y_k)) + (s_k @ s_k.transpose()) / (s_k.transpose() @ y_k)
     
@@ -266,12 +276,15 @@ def ddbfgs(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverOb
     if (s_k.transpose() @ y_k < 0.2*y_k.transpose() @ Hinv_approx @ y_k):
         theta_1_k = (0.8*y_k.transpose() @ Hinv_approx @ y_k) / (y_k.transpose() @ Hinv_approx @ y_k - s_k.transpose() @ y_k)
 
+    # damped step: convex combination of s_k and H_k * y_k
     s_mod_k = theta_1_k * s_k + (1 - theta_1_k) * Hinv_approx @ y_k
 
+    # second damping: on the Hessian side (B = I)
     theta_2_k = 1
     if (s_mod_k.transpose() @ y_k < 0.2*s_mod_k.transpose() @ s_mod_k):
         theta_2_k = (0.8*s_mod_k.transpose() @ s_mod_k) / (s_mod_k.transpose() @ s_mod_k - s_mod_k.transpose() @ y_k)
 
+    # damped curvature: convex combination of y_k and s_mod_k
     y_mod_k = theta_2_k * y_k + (1 - theta_2_k) * s_mod_k
 
 
@@ -356,12 +369,16 @@ def dlbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: 
     # compute H_k * y_k using 2 loop recursion
     Hy = two_loop_recursion(v=-y_k, Hinv_approx_init=Hinv_approx_init, s_buffer=internal_state.s_buffer, y_buffer=internal_state.y_buffer)
 
+    # check if s^T y < 0.2 * y^T H y (insufficient curvature)
     theta_k = 1
     if (s_k.transpose() @ y_k < 0.2*y_k.transpose() @ Hy):
+        # interpolate s toward H*y to guarantee s_mod^T y > 0
         theta_k = (0.8*y_k.transpose() @ Hy) / (y_k.transpose() @ Hy - s_k.transpose() @ y_k)
 
+    # damped step: convex combination of s_k and H_k * y_k
     s_mod_k = theta_k * s_k + (1 - theta_k) * Hy
 
+    # store damped pair in L-BFGS history
     internal_state.s_buffer.append(np.squeeze(s_mod_k))
     internal_state.y_buffer.append(np.squeeze(y_k))
 
@@ -400,6 +417,7 @@ def clbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective: 
     s_k = x_new - x
     y_k = g_new - g
 
+    # Li & Fukushima cautious condition: y^T s >= eps * ||g||^alpha * ||s||^2
     if y_k.transpose() @ s_k >= options.bfgs.cautious_tol * pow(np.linalg.norm(g), options.bfgs.cautious_alpha) * pow(np.linalg.norm(s_k), 2):
         internal_state.s_buffer.append(np.squeeze(s_k))
         internal_state.y_buffer.append(np.squeeze(y_k))
@@ -447,14 +465,18 @@ def ddlbfgs(x: Array, f: Array, g: Array, internal_state: LBFGSState, objective:
     if (s_k.transpose() @ y_k < 0.2*y_k.transpose() @ Hy):
         theta_1_k = (0.8*y_k.transpose() @ Hy) / (y_k.transpose() @ Hy - s_k.transpose() @ y_k)
 
+    # damped step: convex combination of s_k and H_k * y_k
     s_mod_k = theta_1_k * s_k + (1 - theta_1_k) * Hy
 
+    # second damping: on the Hessian side (B = I)
     theta_2_k = 1
     if (s_mod_k.transpose() @ y_k < 0.2*s_mod_k.transpose() @ s_mod_k):
         theta_2_k = (0.8*s_mod_k.transpose() @ s_mod_k) / (s_mod_k.transpose() @ s_mod_k - s_mod_k.transpose() @ y_k)
 
+    # damped curvature: convex combination of y_k and s_mod_k
     y_mod_k = theta_2_k * y_k + (1 - theta_2_k) * s_mod_k
 
+    # store doubly-damped pair in L-BFGS history
     internal_state.s_buffer.append(np.squeeze(s_mod_k))
     internal_state.y_buffer.append(np.squeeze(y_mod_k))
 
@@ -492,7 +514,9 @@ def dfp(x: Array, f: Array, g: Array, Hinv_approx: Array, objective: SolverObjec
     s_k = x_new - x
     y_k = g_new - g
     
+    # skip update when s^T y is too small (near-singular)
     if s_k.transpose() @ y_k >= options.bfgs.sy_tol * np.linalg.norm(s_k) * np.linalg.norm(y_k):
+        # DFP inverse Hessian update: H - (Hyy^TH)/(y^THy) + (ss^T)/(s^Ty)
         Hinv_approx_new = Hinv_approx - (Hinv_approx @ y_k @ y_k.transpose() @ Hinv_approx) / (y_k.transpose() @ Hinv_approx @ y_k) + (s_k @ s_k.transpose()) / (s_k.transpose() @ y_k)
     
     results = StepResults(x_new=x_new,

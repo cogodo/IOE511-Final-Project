@@ -90,7 +90,7 @@ def setProblem(problem: SolverObjective):
         
 def setMethod(method: SolverAlgorithm):
     
-    # set the step for every iteratiokn
+    # set the step for every iteration
     match method.name:
         case 'GradientDescent':
             method.step = lambda x, f, g, H, Hinv_approx, H_approx, delta, internal_state, objective, options: gradient_descent(x=x, f=f, g=g, objective=objective, options=options)
@@ -128,6 +128,7 @@ def optSolver(problem: SolverObjective, method: SolverAlgorithm, options: Solver
     problem = setProblem(problem)
     method = setMethod(method)
 
+    # wrap value/grad with counters to track f/g evaluation counts
     if counters is not None:
         _orig_value, _orig_grad = problem.value, problem.grad
         _nfev, _ngev = [0], [0]

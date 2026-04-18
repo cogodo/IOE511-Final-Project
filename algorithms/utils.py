@@ -39,13 +39,18 @@ def weak_wolfe_line_search(x: Array, f: Array, g: Array, d: Array, objective: So
 
     # perform weak Wolfe line search
     while True:
+        # sufficient decrease (Armijo) condition
         if (objective.value(x + alpha*d) <= f + options.line_search.c1*alpha*g.transpose() @ d):
+            # curvature condition
             if (objective.grad(x + alpha*d).transpose() @ d >= options.line_search.c2*g.transpose() @ d):
                 break
+            # Armijo OK but curvature fails: raise lower bound
             alpha_low = alpha
         else:
+            # Armijo fails: lower upper bound
             alpha_high = alpha
         
+        # bisect between alpha_low and alpha_high
         alpha = options.line_search.c*alpha_low + (1 - options.line_search.c)*alpha_high
 
     return alpha
@@ -134,6 +139,7 @@ def two_loop_recursion(v: Array, Hinv_approx_init: Array, s_buffer: VectorCircul
     s_array = s_buffer.get_ordered()
     y_array = y_buffer.get_ordered()
 
+    # rho_i = 1 / (s_i^T y_i) for each stored pair
     inner_products = np.einsum('ij,ij->i', s_array, y_array)
     rho = 1 / inner_products
     alphas = np.zeros_like(inner_products)
@@ -142,25 +148,29 @@ def two_loop_recursion(v: Array, Hinv_approx_init: Array, s_buffer: VectorCircul
     m = s_array.shape[0]
     loop_indices = np.flip(np.arange(m))
 
+    # backward pass: compute alphas and update q
     for ii in loop_indices:
         si = s_array[ii]
         yi = y_array[ii]
         alphas[ii] = rho[ii] * np.dot(si, q)
         q = q-alphas[ii]*yi
 
+    # apply initial Hessian approximation H_0
     gamma_k = 1
     r = gamma_k * Hinv_approx_init @ q
 
+    # forward pass: compute betas and correct r
     for ii in np.flip(loop_indices):
         si = s_array[ii]
         yi = y_array[ii]
         betas[ii] = rho[ii]* np.dot(yi, r)
         r = r + si*(alphas[ii] - betas[ii])
 
-
+    # return as column vector; negate to get descent direction
     return -r[:, None]
 
 def eval_m_k(f_k: Array, g_k: Array, B_k: Array, d: Array):
+    # quadratic model: m_k(d) = f_k + g_k^T d + 0.5 d^T B_k d
     return f_k + g_k.transpose() @ d + 0.5 * d.transpose() @ B_k @ d
 
 def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
@@ -177,6 +187,7 @@ def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
 
         # if solution found suggests negative curvature, go all the way up to the TR boundary
         if p.transpose() @ B @ p <= 0:
+            # solve ||z + tau*p||^2 = delta^2 for tau
             a = np.dot(p.flatten(), p.flatten())
             b = np.dot(z.flatten(), p.flatten())
             c = np.dot(z.flatten(), z.flatten()) - delta**2
@@ -185,16 +196,20 @@ def cg(f: Array, g: Array, B: Array, delta: float, options: SolverOptions):
             d_0 = z + roots[0] * p
             d_1 = z + roots[1] * p
 
+            # pick the root that gives a lower model value
             if eval_m_k(f_k=f, g_k=g, B_k=B, d=d_1) < eval_m_k(f_k=f, g_k=g, B_k=B, d=d_0):
                 return d_1
             else:
                 return d_0
             
+        # CG step length
         alpha = (r.transpose() @ r) / (p.transpose() @ B @ p)
         z_old = z
         z = z + alpha * p
 
+        # z left the trust region: backtrack to boundary
         if np.linalg.norm(z) >= delta:
+            # solve ||z_old + tau*p||^2 = delta^2 for tau > 0
             a = np.dot(p.flatten(), p.flatten())
             b = np.dot(p.flatten(), z_old.flatten())
             c = np.dot(z_old.flatten(), z_old.flatten()) - delta**2
@@ -223,13 +238,16 @@ def update_tr(rho: float, x: Array, d: Array, delta: float, options: SolverOptio
 
     # adjust the trust region radius and x depending on well m_k approximates f
     if rho > options.trust_region.c1:
+        # good agreement: accept step
         x_new = x + d
         if rho > options.trust_region.c2:
+            # very good agreement: expand radius
             delta_new = 2 * delta
             return x_new, delta_new
         return x_new, delta
         
     else:
+        # poor agreement: reject step, shrink radius
         delta_new = 0.5 * delta
         return x, delta_new
             

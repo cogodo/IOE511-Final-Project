@@ -1,7 +1,7 @@
 """
-Benchmark script: runs all algorithm/line-search combos on every problem,
-collects timing, iteration count, final objective, gradient norm, and
-convergence status, then prints summary tables grouped by problem.
+Single benchmark script that runs all algorithm x problem experiments and
+produces the "Summary of Results" tables (iterations, f-evals, g-evals,
+CPU seconds) as both JSON and LaTeX.
 """
 
 import copy
@@ -15,7 +15,7 @@ import numpy as np
 from algorithms.base import SolverAlgorithm
 from objectives.base import SolverObjective
 from optSolver import optSolver
-from options.base import LineSearchOptions, SolverOptions, BFGSVariantOptions
+from options.base import LineSearchOptions, SolverOptions
 
 
 # ---------------------------------------------------------------------------
@@ -162,7 +162,31 @@ def run_one(problem: SolverObjective, spec: AlgoSpec) -> RunResult:
 
 
 # ---------------------------------------------------------------------------
-# Printing helpers
+# Short display names (for tables)
+# ---------------------------------------------------------------------------
+
+SHORT_ALGO = {
+    "GD_Constant": "GD-C", "GD_Backtracking": "GD-B", "GD_Wolfe": "GD-W",
+    "Newton_Backtracking": "N-B", "Newton_Wolfe": "N-W",
+    "TR-Newton-CG": "TR-N", "TR-SR1-CG": "TR-S",
+    "BFGS_Backtracking": "B-B", "BFGS_Wolfe": "B-W",
+    "D-BFGS_Wolfe": "D-B", "DD-BFGS_Wolfe": "DD-B", "C-BFGS_Wolfe": "C-B",
+    "L-BFGS_Wolfe": "L-B", "D-L-BFGS_Wolfe": "DL-B",
+    "DFP_Backtracking": "DF-B", "DFP_Wolfe": "DF-W",
+}
+
+SHORT_PROB = {
+    "quad_10_10": "Q-10/10", "quad_10_1000": "Q-10/1k",
+    "quad_1000_10": "Q-1k/10", "quad_1000_1000": "Q-1k/1k",
+    "quartic_1": "Quartic-1", "quartic_2": "Quartic-2",
+    "Rosenbrock-2": "Rosen-2", "Rosenbrock-100": "Rosen-100",
+    "datafit_2": "DataFit", "exp_10": "Exp-10",
+    "exp_1000": "Exp-1000", "genhumps_5": "GenHumps",
+}
+
+
+# ---------------------------------------------------------------------------
+# Console printing helpers
 # ---------------------------------------------------------------------------
 
 def print_problem_table(problem_name: str, results: list[RunResult]) -> None:
@@ -227,6 +251,97 @@ def print_global_summary(all_results: list[RunResult], algo_specs: list[AlgoSpec
 
 
 # ---------------------------------------------------------------------------
+# LaTeX table generation
+# ---------------------------------------------------------------------------
+
+def make_latex_table(
+    metric: str,
+    caption: str,
+    label: str,
+    lookup: dict[tuple[str, str], dict],
+    prob_names: list[str],
+    algo_names: list[str],
+    fmt: str = "d",
+) -> str:
+    n = len(algo_names)
+    col_spec = "l" + "r" * n
+    header_cells = " & ".join(f"\\romark{{{SHORT_ALGO[a]}}}" for a in algo_names)
+
+    lines = [
+        r"\begin{table}[ht]",
+        r"\centering",
+        f"\\caption{{{caption}  A cell marked F indicates the algorithm failed (hit max iterations) on that problem.}}",
+        f"\\label{{{label}}}",
+        r"\scriptsize",
+        r"\setlength{\tabcolsep}{3pt}",
+        r"\renewcommand{\arraystretch}{1.1}",
+        r"\resizebox{\textwidth}{!}{",
+        f"\\begin{{tabular}}{{{col_spec}}}",
+        r"\toprule",
+        f"Problem & {header_cells} \\\\",
+        r"\midrule",
+    ]
+
+    for p in prob_names:
+        cells = [SHORT_PROB[p]]
+        for a in algo_names:
+            r = lookup[(p, a)]
+            if not r["converged"]:
+                cells.append("F")
+            else:
+                val = r[metric]
+                if fmt == "d":
+                    cells.append(str(int(val)))
+                else:
+                    cells.append(f"{val:.4f}")
+        lines.append(" & ".join(cells) + r" \\")
+
+    lines += [r"\bottomrule", r"\end{tabular}", "}", r"\end{table}"]
+    return "\n".join(lines)
+
+
+def write_latex_tables(all_results: list[RunResult], out_path: Path) -> None:
+    serializable = _serialize_results(all_results)
+    prob_names = list(dict.fromkeys(r["problem"] for r in serializable))
+    algo_names = list(dict.fromkeys(r["algorithm"] for r in serializable))
+    lookup = {(r["problem"], r["algorithm"]): r for r in serializable}
+
+    preamble = r"""\newcommand{\romark}[1]{\rotatebox{70}{\makebox[0pt][l]{#1}}}"""
+    tables = [
+        make_latex_table("iterations", "Summary of Results: Number of Iterations.", "tab:iters", lookup, prob_names, algo_names),
+        make_latex_table("nfev", "Summary of Results: Number of Function Evaluations.", "tab:nfev", lookup, prob_names, algo_names),
+        make_latex_table("ngev", "Summary of Results: Number of Gradient Evaluations.", "tab:ngev", lookup, prob_names, algo_names),
+        make_latex_table("cpu_time_s", "Summary of Results: CPU Seconds.", "tab:cpu", lookup, prob_names, algo_names, fmt="f"),
+    ]
+
+    output = preamble + "\n\n" + "\n\n".join(tables)
+    out_path.write_text(output)
+    print(f"LaTeX tables written to {out_path} ({len(output)} chars)")
+
+
+# ---------------------------------------------------------------------------
+# Serialization
+# ---------------------------------------------------------------------------
+
+def _serialize_results(all_results: list[RunResult]) -> list[dict]:
+    return [
+        {
+            "problem": r.problem,
+            "algorithm": r.algorithm,
+            "iterations": r.iterations,
+            "nfev": r.nfev,
+            "ngev": r.ngev,
+            "cpu_time_s": r.cpu_time_s,
+            "f_final": r.f_final if not np.isnan(r.f_final) else None,
+            "grad_norm_final": r.grad_norm_final if not np.isnan(r.grad_norm_final) else None,
+            "converged": r.converged,
+            "error": r.error,
+        }
+        for r in all_results
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -262,24 +377,13 @@ def main() -> None:
 
     out_dir = Path("results")
     out_dir.mkdir(exist_ok=True)
-    out_path = out_dir / "benchmark_results.json"
-    serializable = [
-        {
-            "problem": r.problem,
-            "algorithm": r.algorithm,
-            "iterations": r.iterations,
-            "nfev": r.nfev,
-            "ngev": r.ngev,
-            "cpu_time_s": r.cpu_time_s,
-            "f_final": r.f_final if not np.isnan(r.f_final) else None,
-            "grad_norm_final": r.grad_norm_final if not np.isnan(r.grad_norm_final) else None,
-            "converged": r.converged,
-            "error": r.error,
-        }
-        for r in all_results
-    ]
-    out_path.write_text(json.dumps(serializable, indent=2))
-    print(f"Results saved to {out_path}")
+
+    json_path = out_dir / "benchmark_results.json"
+    json_path.write_text(json.dumps(_serialize_results(all_results), indent=2))
+    print(f"Results saved to {json_path}")
+
+    tex_path = out_dir / "summary_tables.tex"
+    write_latex_tables(all_results, tex_path)
 
 
 if __name__ == "__main__":

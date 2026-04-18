@@ -7,7 +7,9 @@ Produces:
   - Grouped bar charts per problem
   - Convergence heatmap
   - Iteration vs CPU scatter
-  - Radar/spider charts per problem
+  - BFGS variant comparison
+  - Line search comparison
+  - QN vs second-order comparison
 """
 
 import json

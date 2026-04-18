@@ -18,7 +18,6 @@ from algorithms.base import SolverAlgorithm
 from objectives.base import SolverObjective
 from optSolver import optSolver
 from options.base import (
-    BFGSVariantOptions,
     LineSearchOptions,
     SolverOptions,
 )
@@ -185,8 +184,6 @@ def run_single(
 def main() -> None:
     problems = build_problems()
     methods = build_methods()
-
-    run_single(problem=problems['Rosenbrock-2'], algo_name=methods['DD-L-BFGS_Wolfe'][0], options=methods['DD-L-BFGS_Wolfe'][1])
 
     args = sys.argv[1:]
 

@@ -1,10 +1,6 @@
-from pathlib import Path
-
-from benchmark import run_one, RunResult, AlgoSpec
+from benchmark import run_one, AlgoSpec
 from sklearn.model_selection import ParameterGrid
 
-from algorithms.base import SolverAlgorithm
-from objectives.base import SolverObjective
 from options.base import LineSearchOptions, SolverOptions, BFGSVariantOptions, TrustRegionOptions
 from runner import build_methods, build_problems
 
@@ -196,5 +192,6 @@ def gridsearch(method_name: str, options: SolverOptions):
 
 
 
-methods = build_methods()
-gridsearch(method_name=methods['BFGS_Wolfe'][0], options=methods['BFGS_Wolfe'][1])
+if __name__ == "__main__":
+    methods = build_methods()
+    gridsearch(method_name=methods['BFGS_Wolfe'][0], options=methods['BFGS_Wolfe'][1])
