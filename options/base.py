@@ -14,7 +14,6 @@ class LineSearchOptions:
     const_alpha: float = 1e-3
     alpha_low0: float = 0.0
     alpha_high0: float = 1000.0
-    rho: float = 0.5
     tau: float = 0.5
     c: float = 0.5
 
