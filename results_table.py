@@ -79,7 +79,6 @@ class AlgoSpec:
 
 def build_algorithms() -> list[AlgoSpec]:
     return [
-        AlgoSpec("GD_Constant",        "GradientDescent", SolverOptions(line_search=CONSTANT)),
         AlgoSpec("GD_Backtracking",    "GradientDescent", SolverOptions(line_search=BACKTRACKING)),
         AlgoSpec("GD_Wolfe",           "GradientDescent", SolverOptions(line_search=WOLFE)),
         AlgoSpec("Newton_Backtracking","Newton",          SolverOptions(line_search=BACKTRACKING)),
@@ -88,11 +87,8 @@ def build_algorithms() -> list[AlgoSpec]:
         AlgoSpec("TR-SR1-CG",          "TR-SR1-CG",       SolverOptions()),
         AlgoSpec("BFGS_Backtracking",  "BFGS",            SolverOptions(line_search=BACKTRACKING)),
         AlgoSpec("BFGS_Wolfe",         "BFGS",            SolverOptions(line_search=WOLFE)),
-        AlgoSpec("D-BFGS_Wolfe",       "D-BFGS",          SolverOptions(line_search=WOLFE)),
-        AlgoSpec("DD-BFGS_Wolfe",      "DD-BFGS",         SolverOptions(line_search=WOLFE)),
-        AlgoSpec("C-BFGS_Wolfe",       "C-BFGS",          SolverOptions(line_search=WOLFE)),
+        AlgoSpec("L-BFGS_Backtracking","L-BFGS",          SolverOptions(line_search=BACKTRACKING)),
         AlgoSpec("L-BFGS_Wolfe",       "L-BFGS",          SolverOptions(line_search=WOLFE)),
-        AlgoSpec("D-L-BFGS_Wolfe",     "D-L-BFGS",        SolverOptions(line_search=WOLFE)),
         AlgoSpec("DFP_Backtracking",   "DFP",             SolverOptions(line_search=BACKTRACKING)),
         AlgoSpec("DFP_Wolfe",          "DFP",             SolverOptions(line_search=WOLFE)),
     ]
@@ -166,12 +162,11 @@ def run_one(problem: SolverObjective, spec: AlgoSpec) -> RunResult:
 # ---------------------------------------------------------------------------
 
 SHORT_ALGO = {
-    "GD_Constant": "GD-C", "GD_Backtracking": "GD-B", "GD_Wolfe": "GD-W",
+    "GD_Backtracking": "GD-B", "GD_Wolfe": "GD-W",
     "Newton_Backtracking": "N-B", "Newton_Wolfe": "N-W",
     "TR-Newton-CG": "TR-N", "TR-SR1-CG": "TR-S",
     "BFGS_Backtracking": "B-B", "BFGS_Wolfe": "B-W",
-    "D-BFGS_Wolfe": "D-B", "DD-BFGS_Wolfe": "DD-B", "C-BFGS_Wolfe": "C-B",
-    "L-BFGS_Wolfe": "L-B", "D-L-BFGS_Wolfe": "DL-B",
+    "L-BFGS_Backtracking": "LB-B", "L-BFGS_Wolfe": "LB-W", 
     "DFP_Backtracking": "DF-B", "DFP_Wolfe": "DF-W",
 }
 
