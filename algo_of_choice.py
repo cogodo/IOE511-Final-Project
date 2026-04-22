@@ -1,4 +1,4 @@
-"""Run L-BFGS with Wolfe line search on both Rosenbrock problems."""
+"""Run BFGS with backtracking line search on both Rosenbrock problems."""
 
 import copy
 
@@ -10,9 +10,9 @@ from optSolver import optSolver
 from options.base import LineSearchOptions, SolverOptions
 
 
-WOLFE = LineSearchOptions(method="Wolfe")
-OPTIONS = SolverOptions(line_search=WOLFE)
-ALGO_NAME = "L-BFGS"
+BACKTRACKING = LineSearchOptions(method="Backtracking")
+OPTIONS = SolverOptions(line_search=BACKTRACKING)
+ALGO_NAME = "BFGS"
 
 
 def build_rosenbrock_problems() -> list[SolverObjective]:
